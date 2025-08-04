@@ -10,11 +10,10 @@ import {
   User,
   Database,
   AlertTriangle,
-        <EmptyState
-          icon={Shield}
-          title="Access Restricted"
-          description="System settings are restricted to IT administrators only."
-        />
+  CheckCircle,
+  Clock
+} from 'lucide-react';
+import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
 interface AuditLog {
