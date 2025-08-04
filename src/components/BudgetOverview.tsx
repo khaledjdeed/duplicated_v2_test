@@ -183,7 +183,7 @@ export function BudgetOverview() {
           </div>
           <button
             onClick={handleExportBudget}
-            className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors shadow-sm hover:shadow-md"
           >
             <Download className="h-4 w-4 mr-2" />
             Export
