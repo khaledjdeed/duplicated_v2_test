@@ -13,7 +13,8 @@ import {
   CheckCircle,
   Clock
 } from 'lucide-react';
-import { format } from 'date-fns';
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                  title="Go back to previous page"
 import toast from 'react-hot-toast';
 
 interface AuditLog {
