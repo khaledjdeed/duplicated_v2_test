@@ -214,11 +214,12 @@ export function AuditLogsView() {
         <div className="text-center py-12">
           <Shield className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-        <EmptyState
-          icon={Shield}
-          title="Access Restricted"
-          description="Audit logs are restricted to CEO and Admin roles only."
-        />
+            Access Restricted
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Audit logs are restricted to CEO and Admin roles only.
+          </p>
+        </div>
       </div>
     );
   }
@@ -446,11 +447,15 @@ export function AuditLogsView() {
         </div>
 
         {filteredLogs.length === 0 && (
-          <EmptyState
-            icon={Shield}
-            title="No audit logs found"
-            description="No audit logs match your current filter criteria. Try adjusting your search parameters."
-          />
+          <div className="text-center py-12">
+            <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No audit logs found
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              No audit logs match your current filter criteria. Try adjusting your search parameters.
+            </p>
+          </div>
         )}
       </div>
     </div>
