@@ -441,18 +441,20 @@ export function AuditLogsView() {
                     )}
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {filteredLogs.length === 0 && (
-          <div className="text-center py-12">
-            <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">No audit logs found matching your criteria</p>
-          </div>
-        )}
-      </div>
-    </div>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: '#1f2937',
+              color: '#f9fafb',
+            },
+          }}
+        />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
