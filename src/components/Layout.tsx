@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useNavigation } from '../hooks/useNavigation';
 import { 
   Home,
   Calendar,
@@ -22,12 +23,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface LayoutProps {
   children: React.ReactNode;
-  activeTab: string;
-  onTabChange: (tab: string) => void;
 }
 
-export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
+export function Layout({ children }: LayoutProps) {
   const { user, users, switchUser } = useAuth();
+  const { currentPage, navigateTo } = useNavigation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showUserSwitcher, setShowUserSwitcher] = useState(false);
 
@@ -232,11 +232,11 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
               <button
                 key={item.id}
                 onClick={() => {
-                  onTabChange(item.id);
+                  navigateTo(item.id);
                   setSidebarOpen(false);
                 }}
                 className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                  activeTab === item.id
+                  currentPage === item.id
                     ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                     : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
                 }`}

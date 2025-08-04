@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useNavigation } from '../hooks/useNavigation';
 import { 
   Calendar,
   Users,
@@ -13,12 +14,9 @@ import {
   Shield
 } from 'lucide-react';
 
-interface DashboardProps {
-  onTabChange: (tab: string) => void;
-}
-
-export function Dashboard({ onTabChange }: DashboardProps) {
+export function Dashboard() {
   const { user } = useAuth();
+  const { navigateTo } = useNavigation();
 
   if (!user) return null;
 
@@ -35,10 +33,10 @@ export function Dashboard({ onTabChange }: DashboardProps) {
             { label: 'Team Members', value: '47', icon: Users, color: 'text-orange-600', bgColor: 'bg-orange-50' }
           ],
           quickActions: [
-            { label: 'Events Calendar', action: () => onTabChange('events'), icon: Calendar },
-            { label: 'Team Management', action: () => onTabChange('teams'), icon: Building2 },
-            { label: 'AI Insights', action: () => onTabChange('ai-assistant'), icon: Brain },
-            { label: 'Analytics Dashboard', action: () => onTabChange('analytics'), icon: BarChart3 }
+            { label: 'Events Calendar', action: () => navigateTo('events'), icon: Calendar },
+            { label: 'Team Management', action: () => navigateTo('teams'), icon: Building2 },
+            { label: 'AI Insights', action: () => navigateTo('ai-assistant'), icon: Brain },
+            { label: 'Analytics Dashboard', action: () => navigateTo('analytics'), icon: BarChart3 }
           ]
         };
 
@@ -53,10 +51,10 @@ export function Dashboard({ onTabChange }: DashboardProps) {
             { label: 'Audit Logs', value: '156', icon: Shield, color: 'text-red-600', bgColor: 'bg-red-50' }
           ],
           quickActions: [
-            { label: 'Contact Directory', action: () => onTabChange('contacts'), icon: Users },
-            { label: 'Team Management', action: () => onTabChange('teams'), icon: Building2 },
-            { label: 'Audit Logs', action: () => onTabChange('audit-logs'), icon: Shield },
-            { label: 'Analytics Dashboard', action: () => onTabChange('analytics'), icon: BarChart3 }
+            { label: 'Contact Directory', action: () => navigateTo('contacts'), icon: Users },
+            { label: 'Team Management', action: () => navigateTo('teams'), icon: Building2 },
+            { label: 'Audit Logs', action: () => navigateTo('audit-logs'), icon: Shield },
+            { label: 'Analytics Dashboard', action: () => navigateTo('analytics'), icon: BarChart3 }
           ]
         };
 
@@ -71,9 +69,9 @@ export function Dashboard({ onTabChange }: DashboardProps) {
             { label: 'Contacts', value: '1,234', icon: Users, color: 'text-orange-600', bgColor: 'bg-orange-50' }
           ],
           quickActions: [
-            { label: 'Events Calendar', action: () => onTabChange('events'), icon: Calendar },
-            { label: 'Marketing Analytics', action: () => onTabChange('analytics'), icon: BarChart3 },
-            { label: 'Contact List', action: () => onTabChange('contacts'), icon: Users }
+            { label: 'Events Calendar', action: () => navigateTo('events'), icon: Calendar },
+            { label: 'Marketing Analytics', action: () => navigateTo('analytics'), icon: BarChart3 },
+            { label: 'Contact List', action: () => navigateTo('contacts'), icon: Users }
           ]
         };
 
@@ -88,10 +86,10 @@ export function Dashboard({ onTabChange }: DashboardProps) {
             { label: 'Completion Rate', value: '87%', icon: TrendingUp, color: 'text-orange-600', bgColor: 'bg-orange-50' }
           ],
           quickActions: [
-            { label: 'My Events', action: () => onTabChange('events'), icon: Calendar },
-            { label: 'My Tasks', action: () => onTabChange('tasks'), icon: ClipboardList },
-            { label: 'Request Event', action: () => onTabChange('event-requests'), icon: Calendar },
-            { label: 'View Budgets', action: () => onTabChange('budgets'), icon: DollarSign }
+            { label: 'My Events', action: () => navigateTo('events'), icon: Calendar },
+            { label: 'My Tasks', action: () => navigateTo('tasks'), icon: ClipboardList },
+            { label: 'Request Event', action: () => navigateTo('event-requests'), icon: Calendar },
+            { label: 'View Budgets', action: () => navigateTo('budgets'), icon: DollarSign }
           ]
         };
 
@@ -106,9 +104,9 @@ export function Dashboard({ onTabChange }: DashboardProps) {
             { label: 'Completion Rate', value: '92%', icon: BarChart3, color: 'text-orange-600', bgColor: 'bg-orange-50' }
           ],
           quickActions: [
-            { label: 'My Tasks', action: () => onTabChange('tasks'), icon: ClipboardList },
-            { label: 'Upload Files', action: () => onTabChange('uploads'), icon: TrendingUp },
-            { label: 'Team Overview', action: () => onTabChange('teams'), icon: Building2 }
+            { label: 'My Tasks', action: () => navigateTo('tasks'), icon: ClipboardList },
+            { label: 'Upload Files', action: () => navigateTo('uploads'), icon: TrendingUp },
+            { label: 'Team Overview', action: () => navigateTo('teams'), icon: Building2 }
           ]
         };
 
@@ -123,10 +121,10 @@ export function Dashboard({ onTabChange }: DashboardProps) {
             { label: 'Active Users', value: '42', icon: Users, color: 'text-purple-600', bgColor: 'bg-purple-50' }
           ],
           quickActions: [
-            { label: 'Events Calendar', action: () => onTabChange('events'), icon: Calendar },
-            { label: 'Event Requests', action: () => onTabChange('event-requests'), icon: ClipboardList },
-            { label: 'System Settings', action: () => onTabChange('settings'), icon: Settings },
-            { label: 'Analytics Dashboard', action: () => onTabChange('analytics'), icon: BarChart3 }
+            { label: 'Events Calendar', action: () => navigateTo('events'), icon: Calendar },
+            { label: 'Event Requests', action: () => navigateTo('event-requests'), icon: ClipboardList },
+            { label: 'System Settings', action: () => navigateTo('settings'), icon: Settings },
+            { label: 'Analytics Dashboard', action: () => navigateTo('analytics'), icon: BarChart3 }
           ]
         };
 
@@ -141,9 +139,9 @@ export function Dashboard({ onTabChange }: DashboardProps) {
             { label: 'Efficiency', value: '94%', icon: TrendingUp, color: 'text-orange-600', bgColor: 'bg-orange-50' }
           ],
           quickActions: [
-            { label: 'Team Tasks', action: () => onTabChange('team-tasks'), icon: ClipboardList },
-            { label: 'Team Overview', action: () => onTabChange('teams'), icon: Building2 },
-            { label: 'Team Analytics', action: () => onTabChange('analytics'), icon: BarChart3 }
+            { label: 'Team Tasks', action: () => navigateTo('team-tasks'), icon: ClipboardList },
+            { label: 'Team Overview', action: () => navigateTo('teams'), icon: Building2 },
+            { label: 'Team Analytics', action: () => navigateTo('analytics'), icon: BarChart3 }
           ]
         };
 

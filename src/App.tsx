@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AuthProvider } from './hooks/useAuth';
 import { NavigationProvider } from './hooks/useNavigation';
+import { useNavigation } from './hooks/useNavigation';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { EventsCalendar } from './components/EventsCalendar';
@@ -17,16 +18,16 @@ import { Toaster } from 'react-hot-toast';
 
 function AppContent() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const { currentPage } = useNavigation();
 
   if (!user) {
     return <Auth />;
   }
 
   const renderActiveTab = () => {
-    switch (activeTab) {
+    switch (currentPage) {
       case 'dashboard':
-        return <Dashboard onTabChange={setActiveTab} />;
+        return <Dashboard />;
       case 'events':
       case 'calendar':
         return <EventsCalendar />;
@@ -48,23 +49,23 @@ function AppContent() {
       case 'contacts':
         return <ContactDirectory />;
       default:
-        return <Dashboard onTabChange={setActiveTab} />;
+        return <Dashboard />;
     }
   };
 
   return (
-    <NavigationProvider>
-      <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+      <Layout>
         {renderActiveTab()}
       </Layout>
-    </NavigationProvider>
   );
 }
 
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <NavigationProvider>
+        <AppContent />
+      </NavigationProvider>
       <Toaster position="top-right" />
     </AuthProvider>
   );
