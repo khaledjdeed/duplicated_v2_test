@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useDemoAuth } from '../hooks/useDemoAuth';
-import { mockUsers, mockTeams, MockUser } from '../lib/mockData';
+import { useAuth } from '../hooks/useAuth';
 import { 
   Users, 
   Plus, 
@@ -19,10 +18,9 @@ import {
 import toast from 'react-hot-toast';
 
 export function UserManagement() {
-  const { currentUser } = useDemoAuth();
-  const [users, setUsers] = useState<MockUser[]>(mockUsers);
+  const { user, users } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<MockUser | null>(null);
+  const [editingUser, setEditingUser] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
 
@@ -30,38 +28,28 @@ export function UserManagement() {
     username: '',
     full_name: '',
     role: 'designer' as const,
-    team_id: 'team1',
+    department: 'Design',
+    pod_id: '',
     avatar_url: ''
   });
 
+  // Mock teams data for the form
+  const mockTeams = [
+    { id: 'team1', name: 'Alpha Team' },
+    { id: 'team2', name: 'Beta Team' },
+    { id: 'team3', name: 'Gamma Team' }
+  ];
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingUser) {
-      setUsers(prev =>
-        prev.map(user =>
-          user.id === editingUser.id
-            ? { ...user, ...formData }
-            : user
-        )
-      );
-      toast.success('User updated successfully');
-    } else {
-      const newUser: MockUser = {
-        id: `user-${Date.now()}`,
-        ...formData,
-        avatar_url: formData.avatar_url || `https://images.pexels.com/photos/${Math.floor(Math.random() * 1000000)}/pexels-photo-${Math.floor(Math.random() * 1000000)}.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop`
-      };
-      setUsers(prev => [...prev, newUser]);
-      toast.success('User created successfully');
-    }
+    // In a real app, this would call an API
+    toast.success(editingUser ? 'User updated successfully' : 'User created successfully');
 
     resetForm();
   };
 
   const handleDelete = (userId: string) => {
     if (confirm('Are you sure you want to delete this user?')) {
-      setUsers(prev => prev.filter(u => u.id !== userId));
       toast.success('User deleted successfully');
     }
   };
@@ -71,57 +59,65 @@ export function UserManagement() {
       username: '',
       full_name: '',
       role: 'designer',
-      team_id: 'team1',
+      department: 'Design',
+      pod_id: '',
       avatar_url: ''
     });
     setShowCreateModal(false);
     setEditingUser(null);
   };
 
-  const startEdit = (user: MockUser) => {
-    setEditingUser(user);
+  const startEdit = (editUser: any) => {
+    setEditingUser(editUser);
     setFormData({
-      username: user.username,
-      full_name: user.full_name,
-      role: user.role,
-      team_id: user.team_id,
-      avatar_url: user.avatar_url || ''
+      username: editUser.email.split('@')[0], // Extract username from email
+      full_name: editUser.full_name,
+      role: editUser.role,
+      department: editUser.department,
+      pod_id: editUser.pod_id || '',
+      avatar_url: editUser.avatar_url || ''
     });
     setShowCreateModal(true);
   };
 
   const getRoleColor = (role: string) => {
     switch (role) {
+      case 'ceo': return 'bg-purple-100 text-purple-800';
       case 'it': return 'bg-purple-100 text-purple-800';
       case 'admin': return 'bg-red-100 text-red-800';
-      case 'event_coordinator': return 'bg-blue-100 text-blue-800';
+      case 'marketing': return 'bg-blue-100 text-blue-800';
+      case 'ae': return 'bg-green-100 text-green-800';
       case 'designer': return 'bg-green-100 text-green-800';
-      case 'sales': return 'bg-yellow-100 text-yellow-800';
       case 'logistics': return 'bg-orange-100 text-orange-800';
+      case 'team_lead': return 'bg-pink-100 text-pink-800';
+      case 'finance': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getRoleIcon = (role: string) => {
     switch (role) {
+      case 'ceo': return Crown;
       case 'it': return Settings;
       case 'admin': return Crown;
-      case 'event_coordinator': return Calendar;
+      case 'marketing': return Mail;
+      case 'ae': return Calendar;
       case 'designer': return Edit;
-      case 'sales': return Phone;
       case 'logistics': return Users;
+      case 'team_lead': return Users;
+      case 'finance': return DollarSign;
       default: return Users;
     }
   };
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.username.toLowerCase().includes(searchTerm.toLowerCase());
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     return matchesSearch && matchesRole;
   });
 
-  const canManageUsers = ['it', 'admin'].includes(currentUser?.role || '');
+  const canManageUsers = ['ceo', 'admin', 'it'].includes(user?.role || '');
 
   if (!canManageUsers) {
     return (
@@ -130,7 +126,7 @@ export function UserManagement() {
           <Shield className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <p className="text-red-600 dark:text-red-400 font-semibold">Access Denied</p>
           <p className="text-gray-500 dark:text-gray-400 mt-2">
-            User management is restricted to IT and Admin users only.
+            User management is restricted to CEO, Admin, and IT users only.
           </p>
         </div>
       </div>
@@ -180,12 +176,15 @@ export function UserManagement() {
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
             >
               <option value="all">All Roles</option>
+              <option value="ceo">CEO</option>
               <option value="it">IT</option>
               <option value="admin">Admin</option>
-              <option value="event_coordinator">Event Coordinator</option>
+              <option value="marketing">Marketing</option>
+              <option value="ae">Account Executive</option>
               <option value="designer">Designer</option>
-              <option value="sales">Sales</option>
               <option value="logistics">Logistics</option>
+              <option value="team_lead">Team Lead</option>
+              <option value="finance">Finance</option>
             </select>
           </div>
         </div>
@@ -193,36 +192,36 @@ export function UserManagement() {
 
       {/* Users Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredUsers.map((user) => {
-          const RoleIcon = getRoleIcon(user.role);
+        {filteredUsers.map((u) => {
+          const RoleIcon = getRoleIcon(u.role);
           return (
-            <div key={user.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div key={u.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <img
-                      src={user.avatar_url || 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=60&h=60&fit=crop'}
-                      alt={user.full_name}
+                      src={u.avatar_url || 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=60&h=60&fit=crop'}
+                      alt={u.full_name}
                       className="w-12 h-12 rounded-full object-cover"
                     />
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {user.full_name}
+                        {u.full_name}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        @{user.username}
+                        {u.email}
                       </p>
                     </div>
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => startEdit(user)}
+                      onClick={() => startEdit(u)}
                       className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => handleDelete(user.id)}
+                      onClick={() => handleDelete(u.id)}
                       className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -232,14 +231,15 @@ export function UserManagement() {
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getRoleColor(user.role)}`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getRoleColor(u.role)}`}>
                       <RoleIcon className="h-3 w-3 mr-1" />
-                      {user.role.replace('_', ' ')}
+                      {u.role.replace('_', ' ')}
                     </span>
                   </div>
 
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    <p>Team: {mockTeams.find(t => t.id === user.team_id)?.name || 'Unknown'}</p>
+                    <p>Department: {u.department}</p>
+                    {u.pod_id && <p>Pod: {u.pod_id}</p>}
                   </div>
 
                   <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
@@ -290,14 +290,15 @@ export function UserManagement() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Username
+                    Email
                   </label>
                   <input
-                    type="text"
+                    type="email"
                     required
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="user@mco.com"
                   />
                 </div>
 
@@ -310,30 +311,43 @@ export function UserManagement() {
                     onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                   >
+                    {user?.role === 'ceo' && <option value="ceo">CEO</option>}
                     <option value="designer">Designer</option>
-                    <option value="event_coordinator">Event Coordinator</option>
-                    <option value="sales">Sales</option>
+                    <option value="ae">Account Executive</option>
+                    <option value="marketing">Marketing</option>
                     <option value="logistics">Logistics</option>
+                    <option value="team_lead">Team Lead</option>
                     <option value="admin">Admin</option>
-                    {currentUser?.role === 'it' && <option value="it">IT</option>}
+                    <option value="finance">Finance</option>
+                    {user?.role === 'ceo' && <option value="it">IT</option>}
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Team
+                    Department
                   </label>
-                  <select
-                    value={formData.team_id}
-                    onChange={(e) => setFormData({ ...formData, team_id: e.target.value })}
+                  <input
+                    type="text"
+                    required
+                    value={formData.department}
+                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  >
-                    {mockTeams.map(team => (
-                      <option key={team.id} value={team.id}>
-                        {team.name}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="e.g., Sales, Marketing, Design"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Pod ID (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.pod_id}
+                    onChange={(e) => setFormData({ ...formData, pod_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="e.g., pod-1"
+                  />
                 </div>
 
                 <div>

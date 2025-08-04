@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useDemoAuth } from '../hooks/useDemoAuth';
+import { useAuth } from '../hooks/useAuth';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export function Analytics() {
-  const { currentUser } = useDemoAuth();
+  const { user, events, tasks, budgets, sponsorships } = useAuth();
   const [timeRange, setTimeRange] = useState('30d');
   const [showCustomRange, setShowCustomRange] = useState(false);
   const [customDateRange, setCustomDateRange] = useState({
@@ -23,50 +23,75 @@ export function Analytics() {
     endDate: ''
   });
 
-  const analyticsData = {
-    overview: {
-      totalEvents: { value: 23, change: 12, trend: 'up' },
-      activeTasks: { value: 89, change: -5, trend: 'down' },
-      totalBudget: { value: 485000, change: 8, trend: 'up' },
-      teamMembers: { value: 47, change: 3, trend: 'up' }
-    },
-    eventMetrics: {
-      completed: 15,
-      active: 5,
-      planning: 3,
-      cancelled: 0
-    },
-    taskMetrics: {
-      completed: 156,
-      inProgress: 34,
-      pending: 23,
-      overdue: 8
-    },
-    budgetBreakdown: [
-      { category: 'Venue', allocated: 150000, spent: 120000 },
-      { category: 'Catering', allocated: 80000, spent: 65000 },
-      { category: 'Marketing', allocated: 45000, spent: 38000 },
-      { category: 'Equipment', allocated: 60000, spent: 42000 },
-      { category: 'Staff', allocated: 90000, spent: 75000 },
-      { category: 'Miscellaneous', allocated: 25000, spent: 18000 }
-    ],
-    sponsorshipMetrics: {
-      platinum: { count: 3, revenue: 150000 },
-      gold: { count: 8, revenue: 200000 },
-      silver: { count: 15, revenue: 225000 },
-      bronze: { count: 22, revenue: 176000 }
-    },
-    monthlyTrends: [
-      { month: 'Jan', events: 2, budget: 45000, tasks: 23 },
-      { month: 'Feb', events: 3, budget: 67000, tasks: 34 },
-      { month: 'Mar', events: 4, budget: 89000, tasks: 45 },
-      { month: 'Apr', events: 3, budget: 78000, tasks: 38 },
-      { month: 'May', events: 5, budget: 125000, tasks: 56 },
-      { month: 'Jun', events: 6, budget: 156000, tasks: 67 }
-    ]
+  // Calculate real analytics from data
+  const calculateAnalytics = () => {
+    const totalEvents = events.length;
+    const activeTasks = tasks.filter(t => t.status !== 'completed').length;
+    const totalBudget = budgets.reduce((sum, b) => sum + b.allocated_amount, 0);
+    const teamMembers = 47; // Mock value
+
+    const eventMetrics = {
+      completed: events.filter(e => e.status === 'completed').length,
+      active: events.filter(e => e.status === 'active').length,
+      planning: events.filter(e => e.status === 'planning').length,
+      cancelled: events.filter(e => e.status === 'cancelled').length
+    };
+
+    const taskMetrics = {
+      completed: tasks.filter(t => t.status === 'completed').length,
+      inProgress: tasks.filter(t => t.status === 'in_progress').length,
+      pending: tasks.filter(t => t.status === 'pending').length,
+      overdue: 8 // Mock value - would calculate based on due dates
+    };
+
+    const budgetBreakdown = budgets.reduce((acc, budget) => {
+      const existing = acc.find(item => item.category === budget.category);
+      if (existing) {
+        existing.allocated += budget.allocated_amount;
+        existing.spent += budget.spent_amount;
+      } else {
+        acc.push({
+          category: budget.category,
+          allocated: budget.allocated_amount,
+          spent: budget.spent_amount
+        });
+      }
+      return acc;
+    }, [] as Array<{ category: string; allocated: number; spent: number }>);
+
+    const sponsorshipMetrics = sponsorships.reduce((acc, sponsor) => {
+      if (!acc[sponsor.package_type]) {
+        acc[sponsor.package_type] = { count: 0, revenue: 0 };
+      }
+      acc[sponsor.package_type].count++;
+      acc[sponsor.package_type].revenue += sponsor.amount || 0;
+      return acc;
+    }, {} as Record<string, { count: number; revenue: number }>);
+    return {
+      overview: {
+        totalEvents: { value: totalEvents, change: 12, trend: 'up' },
+        activeTasks: { value: activeTasks, change: -5, trend: 'down' },
+        totalBudget: { value: totalBudget, change: 8, trend: 'up' },
+        teamMembers: { value: teamMembers, change: 3, trend: 'up' }
+      },
+      eventMetrics,
+      taskMetrics,
+      budgetBreakdown,
+      sponsorshipMetrics,
+      monthlyTrends: [
+        { month: 'Jan', events: 2, budget: 45000, tasks: 23 },
+        { month: 'Feb', events: 3, budget: 67000, tasks: 34 },
+        { month: 'Mar', events: 4, budget: 89000, tasks: 45 },
+        { month: 'Apr', events: 3, budget: 78000, tasks: 38 },
+        { month: 'May', events: 5, budget: 125000, tasks: 56 },
+        { month: 'Jun', events: 6, budget: 156000, tasks: 67 }
+      ]
+    };
   };
 
-  const canViewAnalytics = ['it', 'admin'].includes(currentUser?.role || '');
+  const analyticsData = calculateAnalytics();
+
+  const canViewAnalytics = ['ceo', 'admin', 'it', 'marketing', 'team_lead'].includes(user?.role || '');
 
   if (!canViewAnalytics) {
     return (
@@ -75,7 +100,7 @@ export function Analytics() {
           <BarChart3 className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <p className="text-red-600 dark:text-red-400 font-semibold">Access Denied</p>
           <p className="text-gray-500 dark:text-gray-400 mt-2">
-            Analytics dashboard is restricted to IT and Admin users only.
+            Analytics dashboard is restricted to authorized roles only.
           </p>
         </div>
       </div>

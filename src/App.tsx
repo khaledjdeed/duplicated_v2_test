@@ -5,15 +5,45 @@ import { Dashboard } from './components/Dashboard';
 import { ContactDirectory } from './components/ContactDirectory';
 import { EmailCampaigns } from './components/EmailCampaigns';
 import { AIAssistant } from './components/AIAssistant';
+import { EventsView } from './components/EventsView';
+import { TasksView } from './components/TasksView';
+import { BudgetManagement } from './components/BudgetManagement';
+import { SponsorshipKanban } from './components/SponsorshipKanban';
+import { UserManagement } from './components/UserManagement';
+import { SystemSettings } from './components/SystemSettings';
+import { Analytics } from './components/Analytics';
+import { AuditLogsView } from './components/AuditLogsView';
+import { EventCreationForm } from './components/EventCreationForm';
+import { EventRequestForm } from './components/EventRequestForm';
+import { FileUpload } from './components/FileUpload';
+import { PodManagementView } from './components/PodManagementView';
 import { Toaster } from 'react-hot-toast';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [tabHistory, setTabHistory] = useState<string[]>(['dashboard']);
+
+  const handleTabChange = (tab: string) => {
+    if (tab !== activeTab) {
+      setTabHistory(prev => [...prev, tab]);
+      setActiveTab(tab);
+    }
+  };
+
+  const goBack = () => {
+    if (tabHistory.length > 1) {
+      const newHistory = [...tabHistory];
+      newHistory.pop(); // Remove current tab
+      const previousTab = newHistory[newHistory.length - 1];
+      setTabHistory(newHistory);
+      setActiveTab(previousTab);
+    }
+  };
 
   const renderActiveTab = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard onTabChange={setActiveTab} />;
+        return <Dashboard onTabChange={handleTabChange} />;
       case 'contacts':
         return <ContactDirectory />;
       case 'email-campaigns':
@@ -21,210 +51,48 @@ function AppContent() {
       case 'ai-assistant':
         return <AIAssistant />;
       case 'events':
+        return <EventsView />;
       case 'my-events':
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📅</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Events Management
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Event management system will be integrated with Supabase schema.
-              </p>
-            </div>
-          </div>
-        );
+        return <EventsView />;
       case 'tasks':
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">✅</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Task Management
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Task management with criticality levels and pod scoping.
-              </p>
-            </div>
-          </div>
-        );
+        return <TasksView />;
       case 'budgets':
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">💰</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Budget Management
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Role-based budget visibility and management.
-              </p>
-            </div>
-          </div>
-        );
+        return <BudgetManagement />;
       case 'pods':
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">🏢</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Pod Management
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Operational subunits with Account Executives and Designers.
-              </p>
-            </div>
-          </div>
-        );
+        return <PodManagementView />;
+        return <PodManagementView />;
       case 'analytics':
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📊</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Analytics Dashboard
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Performance metrics and insights from materialized views.
-              </p>
-            </div>
-          </div>
-        );
+        return <Analytics />;
+        return <Analytics />;
       case 'audit-logs':
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Audit Logs
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Complete audit trail of all system activities and exports.
-              </p>
-            </div>
-          </div>
-        );
+        return <AuditLogsView />;
       case 'uploads':
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📁</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                File Uploads
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Designer file upload system with task association.
-              </p>
-            </div>
-          </div>
-        );
+        return <FileUpload />;
       case 'event-requests':
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📝</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Event Requests
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                AE event request system with IT approval workflow.
-              </p>
-            </div>
-          </div>
-        );
+        return <EventRequestForm />;
       case 'event-creation':
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">🛠️</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Event Creation
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                IT event creation panel with 3/day limit enforcement.
-              </p>
-            </div>
-          </div>
-        );
-      case 'pod-overview':
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">👥</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Pod Overview
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Team collaboration and task overview within your pod.
-              </p>
-            </div>
-          </div>
-        );
+        return <EventCreationForm />;
       case 'team-tasks':
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📋</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Team Tasks
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Team lead view of all team member tasks and progress.
-              </p>
-            </div>
-          </div>
-        );
-      case 'team-analytics':
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📈</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Team Analytics
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Performance analytics for your team and pod.
-              </p>
-            </div>
-          </div>
-        );
+        return <TasksView />;
       case 'user-management':
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">👤</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                User Management
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Manage user roles and permissions.
-              </p>
-            </div>
-          </div>
-        );
+        return <UserManagement />;
+      case 'sponsorships':
+        return <SponsorshipKanban />;
       case 'settings':
       case 'system-settings':
-        return (
-          <div className="p-6">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">⚙️</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                System Settings
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                Configure system preferences and integrations.
-              </p>
-            </div>
-          </div>
-        );
+        return <SystemSettings />;
       default:
-        return <Dashboard onTabChange={setActiveTab} />;
+        return <Dashboard onTabChange={handleTabChange} />;
     }
   };
 
   return (
-    <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+    <Layout 
+      activeTab={activeTab} 
+      onTabChange={handleTabChange}
+      tabHistory={tabHistory}
+      onGoBack={goBack}
+    >
       {renderActiveTab()}
     </Layout>
   );

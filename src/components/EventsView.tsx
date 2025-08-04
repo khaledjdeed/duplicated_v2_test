@@ -1,26 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useDemoAuth } from '../hooks/useDemoAuth';
+import { useAuth } from '../hooks/useAuth';
 import { Calendar, MapPin, Users, Clock, Plus, Edit, Trash2, Award } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
-interface Event {
-  id: string;
-  name: string;
-  description: string | null;
-  start_date: string;
-  end_date: string;
-  location: string | null;
-  status: 'planning' | 'active' | 'completed' | 'cancelled';
-  created_at: string;
-}
-
 export function EventsView() {
-  const { currentUser } = useDemoAuth();
-  const [events, setEvents] = useState<Event[]>([]);
+  const { user, events, updateEvent, deleteEvent } = useAuth();
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [editingEvent, setEditingEvent] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -32,86 +20,29 @@ export function EventsView() {
   });
 
   useEffect(() => {
-    fetchEvents();
-  }, [currentUser]);
-
-  const fetchEvents = async () => {
-    if (!currentUser) return;
-
-    try {
-      // Simulate fetching events based on role
-      const mockEvents: Event[] = [
-        {
-          id: '1',
-          name: 'Tech Conference 2024',
-          description: 'Annual technology conference with industry leaders',
-          start_date: '2024-03-15T09:00:00Z',
-          end_date: '2024-03-15T17:00:00Z',
-          location: 'Convention Center',
-          status: 'planning',
-          created_at: '2024-01-15T10:00:00Z'
-        },
-        {
-          id: '2',
-          name: 'Product Launch Event',
-          description: 'Launch event for our new product line',
-          start_date: '2024-04-20T14:00:00Z',
-          end_date: '2024-04-20T18:00:00Z',
-          location: 'Main Auditorium',
-          status: 'active',
-          created_at: '2024-02-01T09:00:00Z'
-        }
-      ];
-
-      // Filter events based on role
-      let filteredEvents = mockEvents;
-      if (currentUser.role !== 'it' && currentUser.role !== 'admin') {
-        // In demo mode, show all events but in real app would filter by team_id
-        filteredEvents = mockEvents;
-      }
-
-      setEvents(filteredEvents);
-    } catch (error) {
-      console.error('Error fetching events:', error);
-      toast.error('Failed to load events');
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Simulate loading
+    setTimeout(() => setLoading(false), 500);
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser) return;
+    if (!user) return;
 
     try {
       if (editingEvent) {
-        // Simulate updating event
-        const updatedEvents = events.map(event =>
-          event.id === editingEvent.id
-            ? { ...event, ...formData, updated_at: new Date().toISOString() }
-            : event
-        );
-        setEvents(updatedEvents);
+        updateEvent(editingEvent.id, formData);
         toast.success('Event updated successfully');
       } else {
         // Create new event (only IT can do this)
-        if (currentUser.role !== 'it') {
+        if (user.role !== 'it') {
           toast.error('Only IT can create events directly');
           return;
         }
 
-        // Simulate creating new event
-        const newEvent: Event = {
-          id: Date.now().toString(),
-          ...formData,
-          created_at: new Date().toISOString()
-        };
-        setEvents([...events, newEvent]);
         toast.success('Event created successfully');
       }
 
       resetForm();
-      fetchEvents();
     } catch (error: any) {
       toast.error(error.message || 'An error occurred');
     }
@@ -121,9 +52,7 @@ export function EventsView() {
     if (!confirm('Are you sure you want to delete this event?')) return;
 
     try {
-      // Simulate deleting event
-      const updatedEvents = events.filter(event => event.id !== eventId);
-      setEvents(updatedEvents);
+      deleteEvent(eventId);
       toast.success('Event deleted successfully');
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete event');
@@ -143,7 +72,7 @@ export function EventsView() {
     setEditingEvent(null);
   };
 
-  const startEdit = (event: Event) => {
+  const startEdit = (event: any) => {
     setEditingEvent(event);
     setFormData({
       name: event.name,
@@ -166,8 +95,22 @@ export function EventsView() {
     }
   };
 
-  const canCreateEvents = currentUser?.role === 'it';
-  const canEditEvents = currentUser?.role === 'it' || currentUser?.role === 'admin';
+  const canCreateEvents = user?.role === 'it';
+  const canEditEvents = user?.role === 'it' || user?.role === 'admin';
+
+  // Filter events based on role
+  const getFilteredEvents = () => {
+    if (!user) return [];
+    
+    if (user.role === 'ae') {
+      // AEs see only their pod's events
+      return events.filter(event => event.team_id === 'team1'); // Mock team filtering
+    }
+    
+    return events;
+  };
+
+  const filteredEvents = getFilteredEvents();
 
   if (loading) {
     return (
@@ -187,7 +130,7 @@ export function EventsView() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Events</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            {currentUser?.role === 'it' ? 'Manage all events' : 'View your team events'}
+            {user?.role === 'it' ? 'Manage all events' : user?.role === 'ae' ? 'Your pod events' : 'View events'}
           </p>
         </div>
         {canCreateEvents && (
@@ -201,7 +144,7 @@ export function EventsView() {
         )}
       </div>
 
-      {events.length === 0 ? (
+      {filteredEvents.length === 0 ? (
         <div className="text-center py-12">
           <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500 dark:text-gray-400">No events found</p>
@@ -217,7 +160,7 @@ export function EventsView() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {events.map((event) => (
+          {filteredEvents.map((event) => (
             <div key={event.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">

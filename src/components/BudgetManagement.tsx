@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useDemoAuth } from '../hooks/useDemoAuth';
-import { mockBudgets, mockEvents, MockBudget } from '../lib/mockData';
+import { useAuth } from '../hooks/useAuth';
 import { 
   DollarSign, 
   Plus, 
@@ -15,10 +14,9 @@ import {
 import toast from 'react-hot-toast';
 
 export function BudgetManagement() {
-  const { currentUser } = useDemoAuth();
-  const [budgets, setBudgets] = useState<MockBudget[]>(mockBudgets);
+  const { user, budgets, events, updateBudget, createBudget, deleteBudget } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<MockBudget | null>(null);
+  const [editingBudget, setEditingBudget] = useState<any>(null);
   const [selectedEvent, setSelectedEvent] = useState('all');
 
   const [formData, setFormData] = useState({
@@ -32,30 +30,28 @@ export function BudgetManagement() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    try {
     if (editingBudget) {
-      setBudgets(prev =>
-        prev.map(budget =>
-          budget.id === editingBudget.id
-            ? { ...budget, ...formData }
-            : budget
-        )
-      );
+        updateBudget(editingBudget.id, formData);
       toast.success('Budget updated successfully');
     } else {
-      const newBudget: MockBudget = {
-        id: `budget-${Date.now()}`,
-        ...formData
+        const newBudget = {
+          ...formData,
+          created_by: user?.id || ''
       };
-      setBudgets(prev => [...prev, newBudget]);
+        createBudget(newBudget);
       toast.success('Budget created successfully');
     }
 
     resetForm();
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred');
+    }
   };
 
   const handleDelete = (budgetId: string) => {
     if (confirm('Are you sure you want to delete this budget item?')) {
-      setBudgets(prev => prev.filter(b => b.id !== budgetId));
+      deleteBudget(budgetId);
       toast.success('Budget item deleted successfully');
     }
   };
@@ -72,7 +68,7 @@ export function BudgetManagement() {
     setEditingBudget(null);
   };
 
-  const startEdit = (budget: MockBudget) => {
+  const startEdit = (budget: any) => {
     setEditingBudget(budget);
     setFormData({
       event_id: budget.event_id,
@@ -85,29 +81,44 @@ export function BudgetManagement() {
   };
 
   const getEventName = (eventId: string) => {
-    const event = mockEvents.find(e => e.id === eventId);
+    const event = events.find(e => e.id === eventId);
     return event ? event.name : 'Unknown Event';
   };
 
-  const filteredBudgets = selectedEvent === 'all' 
-    ? budgets 
-    : budgets.filter(b => b.event_id === selectedEvent);
+  // Filter budgets based on role and event selection
+  const getFilteredBudgets = () => {
+    let filtered = budgets;
+    
+    if (user?.role === 'ae') {
+      // AEs see only budgets for their assigned events
+      const userEvents = events.filter(e => e.team_id === 'team1'); // Mock team filtering
+      filtered = budgets.filter(b => userEvents.some(e => e.id === b.event_id));
+    }
+    
+    if (selectedEvent !== 'all') {
+      filtered = filtered.filter(b => b.event_id === selectedEvent);
+    }
+    
+    return filtered;
+  };
+  const filteredBudgets = getFilteredBudgets();
 
   const totalAllocated = filteredBudgets.reduce((sum, b) => sum + b.allocated_amount, 0);
   const totalSpent = filteredBudgets.reduce((sum, b) => sum + b.spent_amount, 0);
   const remainingBudget = totalAllocated - totalSpent;
   const spentPercentage = totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0;
 
-  const canManageBudgets = ['it', 'admin', 'event_coordinator'].includes(currentUser?.role || '');
+  const canManageBudgets = ['it', 'admin', 'ae'].includes(user?.role || '');
+  const canViewBudgets = ['ceo', 'admin', 'ae', 'it'].includes(user?.role || '');
 
-  if (!canManageBudgets) {
+  if (!canViewBudgets) {
     return (
       <div className="p-6">
         <div className="text-center py-12">
           <DollarSign className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <p className="text-red-600 dark:text-red-400 font-semibold">Access Denied</p>
           <p className="text-gray-500 dark:text-gray-400 mt-2">
-            Budget management is restricted to IT, Admin, and Event Coordinators only.
+            Budget access is restricted to authorized roles only.
           </p>
         </div>
       </div>
@@ -126,13 +137,15 @@ export function BudgetManagement() {
             Track and manage event budgets and expenses
           </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Budget Item
-        </button>
+        {canManageBudgets && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Budget Item
+          </button>
+        )}
       </div>
 
       {/* Budget Overview */}
@@ -210,7 +223,7 @@ export function BudgetManagement() {
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
           >
             <option value="all">All Events</option>
-            {mockEvents.map(event => (
+            {events.map(event => (
               <option key={event.id} value={event.id}>
                 {event.name}
               </option>
@@ -246,9 +259,11 @@ export function BudgetManagement() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Progress
                 </th>
+                {canManageBudgets && (
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Actions
                 </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -302,6 +317,7 @@ export function BudgetManagement() {
                         </span>
                       </div>
                     </td>
+                    {canManageBudgets && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
@@ -318,6 +334,7 @@ export function BudgetManagement() {
                         </button>
                       </div>
                     </td>
+                    )}
                   </tr>
                 );
               })}
@@ -334,7 +351,7 @@ export function BudgetManagement() {
       </div>
 
       {/* Create/Edit Budget Modal */}
-      {showCreateModal && (
+      {showCreateModal && canManageBudgets && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
@@ -353,7 +370,7 @@ export function BudgetManagement() {
                     required
                   >
                     <option value="">Select event</option>
-                    {mockEvents.map(event => (
+                    {events.map(event => (
                       <option key={event.id} value={event.id}>
                         {event.name}
                       </option>

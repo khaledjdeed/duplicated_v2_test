@@ -17,17 +17,22 @@ import {
   Brain,
   Shield,
   UserCog,
-  Building2
+  Building2,
+  ArrowLeft,
+  Target
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Breadcrumbs } from './Breadcrumbs';
 
 interface LayoutProps {
   children: React.ReactNode;
   activeTab: string;
   onTabChange: (tab: string) => void;
+  tabHistory: string[];
+  onGoBack: () => void;
 }
 
-export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
+export function Layout({ children, activeTab, onTabChange, tabHistory, onGoBack }: LayoutProps) {
   const { user, users, switchUser } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showUserSwitcher, setShowUserSwitcher] = useState(false);
@@ -49,9 +54,11 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
           { id: 'budgets', label: 'Budget Overview', icon: DollarSign },
           { id: 'contacts', label: 'Contact Directory', icon: Users },
           { id: 'email-campaigns', label: 'Email Campaigns', icon: Mail },
+          { id: 'sponsorships', label: 'Sponsorships', icon: Target },
           { id: 'analytics', label: 'Analytics', icon: BarChart3 },
           { id: 'ai-assistant', label: 'AI Assistant', icon: Brain },
           { id: 'audit-logs', label: 'Audit Logs', icon: Shield },
+          { id: 'user-management', label: 'User Management', icon: UserCog },
           { id: 'settings', label: 'Settings', icon: Settings }
         );
         break;
@@ -62,6 +69,8 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
           { id: 'contacts', label: 'Contact Directory', icon: Users },
           { id: 'email-campaigns', label: 'Email Campaigns', icon: Mail },
           { id: 'budgets', label: 'Budgets', icon: DollarSign },
+          { id: 'sponsorships', label: 'Sponsorships', icon: Target },
+          { id: 'analytics', label: 'Analytics', icon: BarChart3 },
           { id: 'audit-logs', label: 'Audit Logs', icon: Shield },
           { id: 'user-management', label: 'User Management', icon: UserCog }
         );
@@ -103,7 +112,12 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
         roleSpecificItems.push(
           { id: 'event-creation', label: 'Create Events', icon: Calendar },
           { id: 'event-requests', label: 'Event Requests', icon: Bell },
+          { id: 'events', label: 'All Events', icon: Calendar },
+          { id: 'tasks', label: 'All Tasks', icon: ClipboardList },
           { id: 'budgets', label: 'Budget Overview', icon: DollarSign },
+          { id: 'sponsorships', label: 'Sponsorships', icon: Target },
+          { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+          { id: 'user-management', label: 'User Management', icon: UserCog },
           { id: 'system-settings', label: 'System Settings', icon: Settings }
         );
         break;
@@ -328,6 +342,31 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
           </div>
         </div>
 
+        {/* Desktop header with navigation */}
+        <div className="hidden md:block bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {tabHistory.length > 1 && (
+                <button
+                  onClick={onGoBack}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  Back
+                </button>
+              )}
+              <Breadcrumbs activeTab={activeTab} tabHistory={tabHistory} />
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {user?.full_name}
+              </span>
+              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getRoleColor(user?.role || '')}`}>
+                {user?.role.replace('_', ' ').toUpperCase()}
+              </span>
+            </div>
+          </div>
+        </div>
         {/* Page content */}
         <main className="flex-1 overflow-auto">
           {children}

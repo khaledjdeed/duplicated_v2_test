@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useDemoAuth } from '../hooks/useDemoAuth';
+import { useAuth } from '../hooks/useAuth';
 import { 
   Settings, 
   Shield, 
@@ -17,7 +17,7 @@ import {
 import toast from 'react-hot-toast';
 
 export function SystemSettings() {
-  const { currentUser } = useDemoAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
   const [settings, setSettings] = useState({
     general: {
@@ -62,10 +62,23 @@ export function SystemSettings() {
   };
 
   const handleSave = (category: string) => {
+    // Log the settings change
+    const logEntry = {
+      user_id: user?.id,
+      action: 'update_system_settings',
+      table_name: 'system_settings',
+      details: { 
+        category,
+        settings: settings[category as keyof typeof settings]
+      },
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('Settings update logged:', logEntry);
     toast.success(`${category.charAt(0).toUpperCase() + category.slice(1)} settings saved successfully`);
   };
 
-  if (currentUser?.role !== 'it') {
+  if (user?.role !== 'it') {
     return (
       <div className="p-6">
         <div className="text-center py-12">

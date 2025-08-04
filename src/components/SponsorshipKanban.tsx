@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useDemoAuth } from '../hooks/useDemoAuth';
-import { mockSponsorships, MockSponsorship } from '../lib/mockData';
+import { useAuth } from '../hooks/useAuth';
 import { Plus, Edit, Trash2, DollarSign, Mail, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -37,10 +36,9 @@ const packageColors = {
 };
 
 export function SponsorshipKanban() {
-  const { currentUser } = useDemoAuth();
-  const [sponsorships, setSponsorships] = useState(mockSponsorships);
+  const { user, sponsorships, updateSponsorship, createSponsorship, deleteSponsorship } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingSponsorship, setEditingSponsorship] = useState<MockSponsorship | null>(null);
+  const [editingSponsorship, setEditingSponsorship] = useState<any>(null);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -67,13 +65,7 @@ export function SponsorshipKanban() {
   const handleDrop = (e: React.DragEvent, newStage: string) => {
     e.preventDefault();
     if (draggedItem) {
-      setSponsorships(prev =>
-        prev.map(sponsor =>
-          sponsor.id === draggedItem
-            ? { ...sponsor, stage: newStage as any }
-            : sponsor
-        )
-      );
+      updateSponsorship(draggedItem, { stage: newStage as any });
       setDraggedItem(null);
       toast.success('Sponsorship stage updated');
     }
@@ -82,30 +74,29 @@ export function SponsorshipKanban() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    try {
     if (editingSponsorship) {
-      setSponsorships(prev =>
-        prev.map(sponsor =>
-          sponsor.id === editingSponsorship.id
-            ? { ...sponsor, ...formData }
-            : sponsor
-        )
-      );
+        updateSponsorship(editingSponsorship.id, formData);
       toast.success('Sponsorship updated successfully');
     } else {
-      const newSponsorship: MockSponsorship = {
-        id: `sponsor-${Date.now()}`,
-        ...formData
+        const newSponsorship = {
+          ...formData,
+          team_id: 'team1', // Mock team
+          managed_by: user?.id || ''
       };
-      setSponsorships(prev => [...prev, newSponsorship]);
+        createSponsorship(newSponsorship);
       toast.success('Sponsorship created successfully');
     }
 
     resetForm();
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred');
+    }
   };
 
   const handleDelete = (sponsorshipId: string) => {
     if (confirm('Are you sure you want to delete this sponsorship?')) {
-      setSponsorships(prev => prev.filter(s => s.id !== sponsorshipId));
+      deleteSponsorship(sponsorshipId);
       toast.success('Sponsorship deleted successfully');
     }
   };
@@ -125,7 +116,7 @@ export function SponsorshipKanban() {
     setEditingSponsorship(null);
   };
 
-  const startEdit = (sponsorship: MockSponsorship) => {
+  const startEdit = (sponsorship: any) => {
     setEditingSponsorship(sponsorship);
     setFormData({
       company_name: sponsorship.company_name,
@@ -140,15 +131,16 @@ export function SponsorshipKanban() {
     setShowCreateModal(true);
   };
 
-  const canManageSponsorships = ['sales', 'it', 'admin'].includes(currentUser?.role || '');
+  const canManageSponsorships = ['ceo', 'admin', 'it'].includes(user?.role || '');
+  const canViewSponsorships = ['ceo', 'admin', 'it', 'ae'].includes(user?.role || '');
 
-  if (!canManageSponsorships) {
+  if (!canViewSponsorships) {
     return (
       <div className="p-6">
         <div className="text-center py-12">
           <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500 dark:text-gray-400">
-            Access denied. Only Sales, IT, and Admin users can view sponsorships.
+            Access denied. Sponsorship access is restricted to authorized roles.
           </p>
         </div>
       </div>
@@ -162,13 +154,15 @@ export function SponsorshipKanban() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sponsorship Pipeline</h1>
           <p className="text-gray-600 dark:text-gray-400">Manage event sponsorships</p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Sponsorship
-        </button>
+        {canManageSponsorships && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Sponsorship
+          </button>
+        )}
       </div>
 
       {/* Kanban Board */}
@@ -266,7 +260,7 @@ export function SponsorshipKanban() {
       </div>
 
       {/* Create/Edit Modal */}
-      {showCreateModal && (
+      {showCreateModal && canManageSponsorships && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">

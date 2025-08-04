@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { useDemoAuth } from '../hooks/useDemoAuth';
-import { getTasksByUserId, getUserById } from '../lib/mockData';
+import { useAuth } from '../hooks/useAuth';
 import { useDropzone } from 'react-dropzone';
 import { Upload, File, X, Check, Image, FileText, Archive } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -16,7 +15,7 @@ interface UploadedFile {
 }
 
 export function FileUpload() {
-  const { currentUser } = useDemoAuth();
+  const { user, tasks } = useAuth();
   const [uploads, setUploads] = useState<UploadedFile[]>([
     {
       id: 'upload1',
@@ -68,6 +67,21 @@ export function FileUpload() {
               : u
           )
         );
+
+        // Log the upload
+        const logEntry = {
+          user_id: user?.id,
+          action: 'upload_file',
+          table_name: 'uploads',
+          details: { 
+            file_name: file.name,
+            file_size: file.size,
+            task_id: selectedTaskId
+          },
+          timestamp: new Date().toISOString()
+        };
+
+        console.log('File upload logged:', logEntry);
         toast.success(`${file.name} uploaded successfully`);
       }, 2000);
     });
@@ -106,7 +120,7 @@ export function FileUpload() {
     return File;
   };
 
-  const canUploadFiles = currentUser?.role === 'designer';
+  const canUploadFiles = user?.role === 'designer';
 
   if (!canUploadFiles) {
     return (
@@ -121,7 +135,7 @@ export function FileUpload() {
     );
   }
 
-  const myTasks = getTasksByUserId(currentUser.id);
+  const myTasks = tasks.filter(task => task.assigned_to === user?.id);
   const myUploads = uploads.filter(upload => 
     myTasks.some(task => task.id === upload.task_id)
   );

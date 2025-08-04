@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
-import { useDemoAuth } from '../hooks/useDemoAuth';
-import { mockTasks, mockEvents, mockUsers, MockTask } from '../lib/mockData';
+import { useAuth } from '../hooks/useAuth';
 import { ClipboardList, Plus, Edit, Trash2, User, Calendar, AlertCircle, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
 export function TasksView() {
-  const { currentUser } = useDemoAuth();
-  const [tasks, setTasks] = useState(mockTasks);
+  const { user, tasks, events, users, updateTask, createTask, deleteTask } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingTask, setEditingTask] = useState<MockTask | null>(null);
+  const [editingTask, setEditingTask] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -22,10 +20,26 @@ export function TasksView() {
   });
 
   const getFilteredTasks = () => {
-    if (!currentUser) return [];
+    if (!user) return [];
     
-    if (currentUser.role === 'designer') {
-      return tasks.filter(task => task.assigned_to === currentUser.id);
+    if (user.role === 'designer') {
+      return tasks.filter(task => task.assigned_to === user.id);
+    }
+    
+    if (user.role === 'ae') {
+      // AEs see tasks for their pod's events
+      return tasks.filter(task => {
+        const event = events.find(e => e.id === task.event_id);
+        return event && event.team_id === 'team1'; // Mock team filtering
+      });
+    }
+    
+    if (user.role === 'team_lead') {
+      // Team leads see all tasks for their team
+      return tasks.filter(task => {
+        const assignedUser = users.find(u => u.id === task.assigned_to);
+        return assignedUser && assignedUser.pod_id === user.pod_id;
+      });
     }
     
     return tasks;
@@ -34,43 +48,35 @@ export function TasksView() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    try {
     if (editingTask) {
-      setTasks(prev =>
-        prev.map(task =>
-          task.id === editingTask.id
-            ? { ...task, ...formData }
-            : task
-        )
-      );
+        updateTask(editingTask.id, formData);
       toast.success('Task updated successfully');
     } else {
-      const newTask: MockTask = {
-        id: `task-${Date.now()}`,
+        const newTask = {
         ...formData,
-        created_at: new Date().toISOString()
+          created_by: user?.id || '',
+          due_date: formData.due_date ? new Date(formData.due_date).toISOString() : null
       };
-      setTasks(prev => [...prev, newTask]);
+        createTask(newTask);
       toast.success('Task created successfully');
     }
 
     resetForm();
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred');
+    }
   };
 
   const handleDelete = (taskId: string) => {
     if (confirm('Are you sure you want to delete this task?')) {
-      setTasks(prev => prev.filter(t => t.id !== taskId));
+      deleteTask(taskId);
       toast.success('Task deleted successfully');
     }
   };
 
-  const handleStatusChange = (taskId: string, newStatus: MockTask['status']) => {
-    setTasks(prev =>
-      prev.map(task =>
-        task.id === taskId
-          ? { ...task, status: newStatus }
-          : task
-      )
-    );
+  const handleStatusChange = (taskId: string, newStatus: string) => {
+    updateTask(taskId, { status: newStatus as any });
     toast.success(`Task marked as ${newStatus}`);
   };
 
@@ -88,7 +94,7 @@ export function TasksView() {
     setEditingTask(null);
   };
 
-  const startEdit = (task: MockTask) => {
+  const startEdit = (task: any) => {
     setEditingTask(task);
     setFormData({
       title: task.title,
@@ -121,17 +127,17 @@ export function TasksView() {
   };
 
   const getUserName = (userId: string) => {
-    const user = mockUsers.find(u => u.id === userId);
-    return user ? user.full_name : 'Unknown User';
+    const foundUser = users.find(u => u.id === userId);
+    return foundUser ? foundUser.full_name : 'Unknown User';
   };
 
   const getEventName = (eventId: string) => {
-    const event = mockEvents.find(e => e.id === eventId);
+    const event = events.find(e => e.id === eventId);
     return event ? event.name : 'Unknown Event';
   };
 
-  const canCreateTasks = ['it', 'admin', 'event_coordinator'].includes(currentUser?.role || '');
-  const canEditTasks = ['it', 'admin', 'event_coordinator'].includes(currentUser?.role || '');
+  const canCreateTasks = ['it', 'admin', 'ae', 'team_lead'].includes(user?.role || '');
+  const canEditTasks = ['it', 'admin', 'ae', 'team_lead'].includes(user?.role || '');
   const filteredTasks = getFilteredTasks();
 
   return (
@@ -139,11 +145,13 @@ export function TasksView() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {currentUser?.role === 'designer' ? 'My Tasks' : 'Tasks'}
+            {user?.role === 'designer' ? 'My Tasks' : user?.role === 'team_lead' ? 'Team Tasks' : 'Tasks'}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            {currentUser?.role === 'designer' 
+            {user?.role === 'designer' 
               ? 'Tasks assigned to you' 
+              : user?.role === 'team_lead'
+              ? 'Tasks for your team members'
               : 'Manage team tasks and assignments'
             }
           </p>
@@ -163,7 +171,7 @@ export function TasksView() {
         <div className="text-center py-12">
           <ClipboardList className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500 dark:text-gray-400">
-            {currentUser?.role === 'designer' ? 'No tasks assigned to you' : 'No tasks found'}
+            {user?.role === 'designer' ? 'No tasks assigned to you' : 'No tasks found'}
           </p>
           {canCreateTasks && (
             <button
@@ -236,7 +244,7 @@ export function TasksView() {
                 </div>
 
                 {/* Quick Actions */}
-                {currentUser?.role === 'designer' && task.assigned_to === currentUser.id && (
+                {user?.role === 'designer' && task.assigned_to === user.id && (
                   <div className="flex space-x-2">
                     {task.status === 'pending' && (
                       <button
@@ -340,9 +348,9 @@ export function TasksView() {
                     required
                   >
                     <option value="">Select assignee</option>
-                    {mockUsers.map(user => (
-                      <option key={user.id} value={user.id}>
-                        {user.full_name} ({user.role.replace('_', ' ')})
+                    {users.map(u => (
+                      <option key={u.id} value={u.id}>
+                        {u.full_name} ({u.role.replace('_', ' ')})
                       </option>
                     ))}
                   </select>
@@ -359,7 +367,7 @@ export function TasksView() {
                     required
                   >
                     <option value="">Select event</option>
-                    {mockEvents.map(event => (
+                    {events.map(event => (
                       <option key={event.id} value={event.id}>
                         {event.name}
                       </option>

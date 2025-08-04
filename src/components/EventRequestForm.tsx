@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useDemoAuth } from '../hooks/useDemoAuth';
+import { useAuth } from '../hooks/useAuth';
 import { Calendar, Send, Clock, MapPin, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -18,7 +18,7 @@ interface EventRequest {
 }
 
 export function EventRequestForm() {
-  const { currentUser } = useDemoAuth();
+  const { user } = useAuth();
   const [requests, setRequests] = useState<EventRequest[]>([
     {
       id: 'req1',
@@ -63,11 +63,25 @@ export function EventRequestForm() {
       id: `req-${Date.now()}`,
       ...formData,
       status: 'pending',
-      requested_by: currentUser?.id || '',
+      requested_by: user?.id || '',
       created_at: new Date().toISOString()
     };
 
     setRequests(prev => [newRequest, ...prev]);
+
+    // Log the request
+    const logEntry = {
+      user_id: user?.id,
+      action: 'create_event_request',
+      table_name: 'event_requests',
+      details: { 
+        event_name: formData.name,
+        justification: formData.justification
+      },
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('Event request logged:', logEntry);
     toast.success('Event request submitted successfully');
     
     setFormData({
@@ -90,8 +104,8 @@ export function EventRequestForm() {
     }
   };
 
-  const canRequestEvents = currentUser?.role === 'event_coordinator';
-  const canApproveRequests = currentUser?.role === 'it';
+  const canRequestEvents = user?.role === 'ae';
+  const canApproveRequests = user?.role === 'it';
 
   const handleApproval = (requestId: string, status: 'approved' | 'rejected') => {
     setRequests(prev =>
@@ -101,19 +115,45 @@ export function EventRequestForm() {
           : req
       )
     );
+
+    // Log the approval action
+    const logEntry = {
+      user_id: user?.id,
+      action: `${status}_event_request`,
+      table_name: 'event_requests',
+      details: { 
+        request_id: requestId,
+        decision: status
+      },
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('Event request approval logged:', logEntry);
     toast.success(`Request ${status} successfully`);
   };
 
+  if (!canRequestEvents && !canApproveRequests) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-12">
+          <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-gray-400">
+            Access denied. Only Account Executives can submit requests and IT can approve them.
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {canRequestEvents ? 'Event Requests' : 'Event Request Management'}
+            {canRequestEvents ? 'Request New Event' : 'Event Request Management'}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             {canRequestEvents 
-              ? 'Submit requests for new events to IT for approval' 
+              ? 'Submit requests for new events to IT for approval'
               : 'Review and approve event requests from coordinators'
             }
           </p>
@@ -129,16 +169,6 @@ export function EventRequestForm() {
         )}
       </div>
 
-      {!canRequestEvents && !canApproveRequests && (
-        <div className="text-center py-12">
-          <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 dark:text-gray-400">
-            Access denied. Only Event Coordinators can submit requests and IT can approve them.
-          </p>
-        </div>
-      )}
-
-      {(canRequestEvents || canApproveRequests) && (
         <div className="space-y-6">
           {requests.length === 0 ? (
             <div className="text-center py-12">
@@ -219,10 +249,9 @@ export function EventRequestForm() {
             ))
           )}
         </div>
-      )}
 
       {/* Request Form Modal */}
-      {showForm && (
+      {showForm && canRequestEvents && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
