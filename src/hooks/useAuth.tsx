@@ -1,122 +1,67 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase } from '../lib/supabase';
-import type { User } from '@supabase/supabase-js';
+import { createContext, useContext, ReactNode } from 'react';
 
-interface AuthUser {
-  id: string;
-  email: string;
-  full_name: string;
-  role: string;
-  team_id?: string;
-  pod_id?: string;
-}
+// Mock user for demo purposes
+const mockUser = {
+  id: 'yousef-ceo',
+  email: 'yousef@mco.com',
+  full_name: 'Yousef Al-Rashid',
+  role: 'ceo',
+  team_id: 'team-1',
+  username: 'yousef',
+  avatar_url: 'https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop',
+  department: 'Executive',
+  created_at: '2024-01-01T00:00:00Z',
+  updated_at: '2024-01-01T00:00:00Z'
+};
+
+// Mock users list for demo
+const mockUsers = [
+  mockUser,
+  {
+    id: 'mariam-admin',
+    email: 'mariam@mco.com',
+    full_name: 'Mariam Wael',
+    role: 'admin',
+    team_id: 'team-1',
+    username: 'mariam',
+    avatar_url: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop',
+    department: 'Administration',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z'
+  },
+  {
+    id: 'imran-it',
+    email: 'imran@mco.com',
+    full_name: 'Imran Khan',
+    role: 'it',
+    team_id: 'team-1',
+    username: 'imran',
+    avatar_url: 'https://images.pexels.com/photos/1181424/pexels-photo-1181424.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop',
+    department: 'Technical & IT',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z'
+  }
+];
 
 interface AuthContextType {
-  user: AuthUser | null;
+  user: typeof mockUser | null;
+  users: typeof mockUsers;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: Partial<AuthUser>) => Promise<void>;
+  signIn: (username: string, password: string) => Promise<{ error?: any }>;
+  signUp: (email: string, password: string, username: string, fullName: string, role: string) => Promise<{ error?: any }>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        fetchUserProfile(session.user);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        await fetchUserProfile(session.user);
-      } else {
-        setUser(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const fetchUserProfile = async (supabaseUser: User) => {
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', supabaseUser.id)
-        .single();
-
-      if (error) throw error;
-
-      setUser({
-        id: supabaseUser.id,
-        email: supabaseUser.email || '',
-        full_name: profile?.full_name || '',
-        role: profile?.role || 'user',
-        team_id: profile?.team_id,
-        pod_id: profile?.pod_id,
-      });
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
-  };
-
-  const signUp = async (email: string, password: string, userData: Partial<AuthUser>) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    
-    if (error) throw error;
-    
-    if (data.user) {
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          email: data.user.email,
-          full_name: userData.full_name,
-          role: userData.role || 'user',
-          team_id: userData.team_id,
-          pod_id: userData.pod_id,
-        });
-      
-      if (profileError) throw profileError;
-    }
-  };
-
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-  };
-
   const value = {
-    user,
-    loading,
-    signIn,
-    signUp,
-    signOut,
+    user: mockUser, // Always return the mock user for demo
+    users: mockUsers,
+    loading: false,
+    signIn: async () => ({ error: null }),
+    signUp: async () => ({ error: null }),
+    signOut: async () => {},
   };
 
   return (
