@@ -10,11 +10,11 @@ import {
   User,
   Database,
   AlertTriangle,
-        <EmptyState
-          icon={DollarSign}
-          title="Access Restricted"
-          description="Budget access is restricted to authorized roles only."
-        />
+  CheckCircle,
+  Clock,
+  DollarSign
+} from 'lucide-react';
+import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
 interface AuditLog {

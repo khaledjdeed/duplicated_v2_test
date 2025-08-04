@@ -10,11 +10,11 @@ import {
   User,
   Database,
   AlertTriangle,
-        <EmptyState
-          icon={BarChart3}
-          title="Access Restricted"
-          description="Analytics dashboard is restricted to authorized roles only."
-        />
+  CheckCircle,
+  Clock,
+  BarChart3
+} from 'lucide-react';
+import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
 interface AuditLog {
