@@ -1,4 +1,3 @@
-// src/components/AIAssistant.tsx
 import React from 'react';
 
 export function AIAssistant() {

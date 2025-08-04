@@ -1,4 +1,3 @@
-// src/components/Analytics.tsx
 import React from 'react';
 
 export function Analytics() {
