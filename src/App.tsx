@@ -441,20 +441,11 @@ export function AuditLogsView() {
                     )}
                   </td>
                 </tr>
-    <ErrorBoundary>
-      <AuthProvider>
-        <AppContent />
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            duration: 3000,
-            style: {
-              background: '#1f2937',
-              color: '#f9fafb',
-            },
-          }}
-        />
-      </AuthProvider>
-    </ErrorBoundary>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }
