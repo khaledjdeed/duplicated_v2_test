@@ -216,7 +216,7 @@ export function AuditLogsView() {
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             Access Restricted
           </h2>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-gray-400">
             Audit logs are restricted to CEO and Admin roles only.
           </p>
         </div>
@@ -449,7 +449,12 @@ export function AuditLogsView() {
         {filteredLogs.length === 0 && (
           <div className="text-center py-12">
             <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">No audit logs found matching your criteria</p>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No audit logs found
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              No audit logs match your current filter criteria. Try adjusting your search parameters.
+            </p>
           </div>
         )}
       </div>
