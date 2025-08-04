@@ -10,11 +10,12 @@ import {
   User,
   Database,
   AlertTriangle,
-        <EmptyState
-          icon={Calendar}
-          title="Access Restricted"
-          description="Event creation is restricted to IT administrators only."
-        />
+  CheckCircle,
+  Clock
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { toast } from 'react-hot-toast';
+
 interface AuditLog {
   id: string;
   user_id: string;
