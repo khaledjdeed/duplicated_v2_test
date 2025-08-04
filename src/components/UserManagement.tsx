@@ -10,11 +10,10 @@ import {
   User,
   Database,
   AlertTriangle,
-        <EmptyState
-          icon={Shield}
-          title="Access Restricted"
-          description="User management is restricted to CEO, Admin, and IT users only."
-        />
+  CheckCircle,
+  Clock
+} from 'lucide-react';
+import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
 interface AuditLog {
