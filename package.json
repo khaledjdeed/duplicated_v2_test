@@ -14,7 +14,6 @@
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.52.1",
-    "caniuse-lite": "^1.0.30001731",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.9",
     "lucide-react": "^0.344.0",
