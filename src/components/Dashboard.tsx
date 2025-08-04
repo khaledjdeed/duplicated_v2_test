@@ -1,279 +1,458 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { 
+  Shield, 
+  Search, 
+  Filter, 
+  Download, 
+  Eye, 
   Calendar,
-  Users,
-  ClipboardList,
-  DollarSign,
-  TrendingUp,
-  Building2,
-  Mail,
-  BarChart3,
-  Brain,
-  Shield
+  User,
+  Database,
+  AlertTriangle,
+  CheckCircle,
+  Clock
 } from 'lucide-react';
+import { format } from 'date-fns';
+import toast from 'react-hot-toast';
 
-interface DashboardProps {
-  onTabChange: (tab: string) => void;
+interface AuditLog {
+  id: string;
+  user_id: string;
+  user_name: string;
+  action: string;
+  table_name: string;
+  record_id?: string;
+  details?: Record<string, any>;
+  timestamp: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  ip_address?: string;
 }
 
-export function Dashboard({ onTabChange }: DashboardProps) {
-  const { user } = useAuth();
+export function AuditLogsView() {
+  const { user, users } = useAuth();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [actionFilter, setActionFilter] = useState('all');
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [dateRange, setDateRange] = useState('7d');
+  const [selectedLogs, setSelectedLogs] = useState<string[]>([]);
 
-  if (!user) return null;
+  // Mock audit logs data
+  const auditLogs: AuditLog[] = [
+    {
+      id: 'log1',
+      user_id: 'yousef-ceo',
+      user_name: 'Yousef Al-Rashid',
+      action: 'export_contacts',
+      table_name: 'contacts',
+      record_id: 'all',
+      details: { contact_count: 1234, export_format: 'csv' },
+      timestamp: '2024-12-01T14:30:00Z',
+      severity: 'medium',
+      ip_address: '192.168.1.100'
+    },
+    {
+      id: 'log2',
+      user_id: 'mariam-admin',
+      user_name: 'Mariam Wael',
+      action: 'create_email_campaign',
+      table_name: 'email_campaigns',
+      record_id: 'campaign-123',
+      details: { campaign_name: 'Healthcare Summit 2024', recipient_count: 856 },
+      timestamp: '2024-12-01T13:15:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.101'
+    },
+    {
+      id: 'log3',
+      user_id: 'imran-it',
+      user_name: 'Imran Khan',
+      action: 'create_event',
+      table_name: 'events',
+      record_id: 'event-456',
+      details: { event_name: 'Cardiology Conference 2024', budget: 150000 },
+      timestamp: '2024-12-01T12:45:00Z',
+      severity: 'high',
+      ip_address: '192.168.1.102'
+    },
+    {
+      id: 'log4',
+      user_id: 'samir-ae',
+      user_name: 'Samir Hassan',
+      action: 'failed_login',
+      table_name: 'auth',
+      details: { reason: 'invalid_password', attempts: 3 },
+      timestamp: '2024-12-01T11:20:00Z',
+      severity: 'critical',
+      ip_address: '192.168.1.103'
+    },
+    {
+      id: 'log5',
+      user_id: 'joel-designer',
+      user_name: 'Joel Mutia',
+      action: 'upload_file',
+      table_name: 'uploads',
+      record_id: 'upload-789',
+      details: { file_name: 'conference-banner.png', file_size: 2048000 },
+      timestamp: '2024-12-01T10:30:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.104'
+    },
+    {
+      id: 'log6',
+      user_id: 'layla-marketing',
+      user_name: 'Layla Al-Zahra',
+      action: 'send_email_campaign',
+      table_name: 'email_campaigns',
+      record_id: 'campaign-124',
+      details: { emails_sent: 1247, success_rate: 96.2 },
+      timestamp: '2024-12-01T09:15:00Z',
+      severity: 'medium',
+      ip_address: '192.168.1.105'
+    },
+    {
+      id: 'log7',
+      user_id: 'yousef-ceo',
+      user_name: 'Yousef Al-Rashid',
+      action: 'view_budget',
+      table_name: 'budgets',
+      record_id: 'budget-all',
+      details: { total_budget_viewed: 2400000 },
+      timestamp: '2024-11-30T16:45:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.100'
+    },
+    {
+      id: 'log8',
+      user_id: 'ahmed-teamlead',
+      user_name: 'Ahmed Al-Maktoum',
+      action: 'assign_task',
+      table_name: 'tasks',
+      record_id: 'task-890',
+      details: { task_title: 'Design Event Materials', assigned_to: 'Joel Mutia' },
+      timestamp: '2024-11-30T15:20:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.106'
+    }
+  ];
 
-  const getDashboardData = () => {
-    switch (user.role) {
-      case 'ceo':
-        return {
-          title: 'CEO Dashboard',
-          subtitle: 'Complete organizational overview',
-          stats: [
-            { label: 'Active Events', value: '23', icon: Calendar, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-            { label: 'Total Pods', value: '8', icon: Building2, color: 'text-green-600', bgColor: 'bg-green-50' },
-            { label: 'Budget Allocated', value: 'AED 2.4M', icon: DollarSign, color: 'text-purple-600', bgColor: 'bg-purple-50' },
-            { label: 'Team Members', value: '47', icon: Users, color: 'text-orange-600', bgColor: 'bg-orange-50' }
-          ],
-          quickActions: [
-            { label: 'View All Events', action: () => onTabChange('events'), icon: Calendar },
-            { label: 'Pod Management', action: () => onTabChange('pods'), icon: Building2 },
-            { label: 'AI Insights', action: () => onTabChange('ai-assistant'), icon: Brain },
-            { label: 'Analytics', action: () => onTabChange('analytics'), icon: BarChart3 }
-          ]
-        };
+  const handleExport = () => {
+    if (!['ceo', 'admin'].includes(user?.role || '')) {
+      toast.error('You do not have permission to export audit logs');
+      return;
+    }
 
-      case 'admin':
-        return {
-          title: 'Admin Dashboard',
-          subtitle: 'System administration and oversight',
-          stats: [
-            { label: 'Active Events', value: '23', icon: Calendar, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-            { label: 'Pending Requests', value: '5', icon: ClipboardList, color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
-            { label: 'Email Campaigns', value: '12', icon: Mail, color: 'text-green-600', bgColor: 'bg-green-50' },
-            { label: 'Audit Logs', value: '156', icon: Shield, color: 'text-red-600', bgColor: 'bg-red-50' }
-          ],
-          quickActions: [
-            { label: 'Contact Directory', action: () => onTabChange('contacts'), icon: Users },
-            { label: 'Email Campaigns', action: () => onTabChange('email-campaigns'), icon: Mail },
-            { label: 'Audit Logs', action: () => onTabChange('audit-logs'), icon: Shield },
-            { label: 'User Management', action: () => onTabChange('user-management'), icon: Users }
-          ]
-        };
+    // Log the export action
+    const exportLogEntry: AuditLog = {
+      id: `log-${Date.now()}`,
+      user_id: user?.id || '',
+      user_name: user?.full_name || '',
+      action: 'export_audit_logs',
+      table_name: 'audit_logs',
+      details: { 
+        log_count: selectedLogs.length || auditLogs.length,
+        export_format: 'csv',
+        filters: { action: actionFilter, severity: severityFilter, date_range: dateRange }
+      },
+      timestamp: new Date().toISOString(),
+      severity: 'medium',
+      ip_address: '192.168.1.100'
+    };
 
-      case 'marketing':
-        return {
-          title: 'Marketing Dashboard',
-          subtitle: 'Campaign management and analytics',
-          stats: [
-            { label: 'Active Campaigns', value: '8', icon: Mail, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-            { label: 'Emails Sent', value: '2,847', icon: TrendingUp, color: 'text-green-600', bgColor: 'bg-green-50' },
-            { label: 'Open Rate', value: '24.3%', icon: BarChart3, color: 'text-purple-600', bgColor: 'bg-purple-50' },
-            { label: 'Contacts', value: '1,234', icon: Users, color: 'text-orange-600', bgColor: 'bg-orange-50' }
-          ],
-          quickActions: [
-            { label: 'Create Campaign', action: () => onTabChange('email-campaigns'), icon: Mail },
-            { label: 'View Analytics', action: () => onTabChange('analytics'), icon: BarChart3 },
-            { label: 'Contact List', action: () => onTabChange('contacts'), icon: Users }
-          ]
-        };
+    console.log('Audit log export:', exportLogEntry);
+    toast.success(`Exported ${selectedLogs.length || auditLogs.length} audit log entries`);
+  };
 
-      case 'ae':
-        return {
-          title: 'Account Executive Dashboard',
-          subtitle: 'Your events and tasks',
-          stats: [
-            { label: 'My Events', value: '5', icon: Calendar, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-            { label: 'Active Tasks', value: '12', icon: ClipboardList, color: 'text-green-600', bgColor: 'bg-green-50' },
-            { label: 'Event Budget', value: 'AED 450K', icon: DollarSign, color: 'text-purple-600', bgColor: 'bg-purple-50' },
-            { label: 'Completion Rate', value: '87%', icon: TrendingUp, color: 'text-orange-600', bgColor: 'bg-orange-50' }
-          ],
-          quickActions: [
-            { label: 'My Events', action: () => onTabChange('my-events'), icon: Calendar },
-            { label: 'My Tasks', action: () => onTabChange('tasks'), icon: ClipboardList },
-            { label: 'Request Event', action: () => onTabChange('event-requests'), icon: Calendar },
-            { label: 'View Budgets', action: () => onTabChange('budgets'), icon: DollarSign }
-          ]
-        };
-
-      case 'designer':
-        return {
-          title: 'Designer Dashboard',
-          subtitle: 'Your creative tasks and projects',
-          stats: [
-            { label: 'Active Tasks', value: '8', icon: ClipboardList, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-            { label: 'Files Uploaded', value: '24', icon: TrendingUp, color: 'text-green-600', bgColor: 'bg-green-50' },
-            { label: 'Pod Projects', value: '3', icon: Building2, color: 'text-purple-600', bgColor: 'bg-purple-50' },
-            { label: 'Completion Rate', value: '92%', icon: BarChart3, color: 'text-orange-600', bgColor: 'bg-orange-50' }
-          ],
-          quickActions: [
-            { label: 'My Tasks', action: () => onTabChange('tasks'), icon: ClipboardList },
-            { label: 'Upload Files', action: () => onTabChange('uploads'), icon: TrendingUp },
-            { label: 'Pod Overview', action: () => onTabChange('pod-overview'), icon: Building2 }
-          ]
-        };
-
-      case 'it':
-        return {
-          title: 'IT Dashboard',
-          subtitle: 'Event creation and system management',
-          stats: [
-            { label: 'Events Created Today', value: '2/3', icon: Calendar, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-            { label: 'Pending Requests', value: '7', icon: ClipboardList, color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
-            { label: 'System Health', value: '99.8%', icon: TrendingUp, color: 'text-green-600', bgColor: 'bg-green-50' },
-            { label: 'Active Users', value: '42', icon: Users, color: 'text-purple-600', bgColor: 'bg-purple-50' }
-          ],
-          quickActions: [
-            { label: 'Create Event', action: () => onTabChange('event-creation'), icon: Calendar },
-            { label: 'Event Requests', action: () => onTabChange('event-requests'), icon: ClipboardList },
-            { label: 'System Settings', action: () => onTabChange('system-settings'), icon: TrendingUp }
-          ]
-        };
-
-      case 'team_lead':
-        return {
-          title: 'Team Lead Dashboard',
-          subtitle: 'Pod performance and team overview',
-          stats: [
-            { label: 'Team Tasks', value: '18', icon: ClipboardList, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-            { label: 'Pod Events', value: '4', icon: Calendar, color: 'text-green-600', bgColor: 'bg-green-50' },
-            { label: 'Team Members', value: '6', icon: Users, color: 'text-purple-600', bgColor: 'bg-purple-50' },
-            { label: 'Efficiency', value: '94%', icon: TrendingUp, color: 'text-orange-600', bgColor: 'bg-orange-50' }
-          ],
-          quickActions: [
-            { label: 'Team Tasks', action: () => onTabChange('team-tasks'), icon: ClipboardList },
-            { label: 'Pod Overview', action: () => onTabChange('pod-overview'), icon: Building2 },
-            { label: 'Team Analytics', action: () => onTabChange('team-analytics'), icon: BarChart3 }
-          ]
-        };
-
-      default:
-        return {
-          title: 'Dashboard',
-          subtitle: 'Welcome to MCO',
-          stats: [],
-          quickActions: []
-        };
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'critical': return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      case 'high': return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+      case 'medium': return <Eye className="h-4 w-4 text-yellow-500" />;
+      case 'low': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      default: return <Clock className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  const dashboardData = getDashboardData();
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
+      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const filteredLogs = auditLogs.filter(log => {
+    const matchesSearch = log.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.table_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesAction = actionFilter === 'all' || log.action === actionFilter;
+    const matchesSeverity = severityFilter === 'all' || log.severity === severityFilter;
+    
+    // Date filtering
+    const logDate = new Date(log.timestamp);
+    const now = new Date();
+    const daysDiff = Math.floor((now.getTime() - logDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    let matchesDate = true;
+    switch (dateRange) {
+      case '1d': matchesDate = daysDiff <= 1; break;
+      case '7d': matchesDate = daysDiff <= 7; break;
+      case '30d': matchesDate = daysDiff <= 30; break;
+      case '90d': matchesDate = daysDiff <= 90; break;
+    }
+    
+    return matchesSearch && matchesAction && matchesSeverity && matchesDate;
+  });
+
+  const canViewAuditLogs = ['ceo', 'admin'].includes(user?.role || '');
+
+  if (!canViewAuditLogs) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-12">
+          <Shield className="h-12 w-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Access Restricted
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400">
+            Audit logs are restricted to CEO and Admin roles only.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div className="p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {dashboardData.title}
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+            <Shield className="h-6 w-6 mr-2 text-red-600" />
+            Audit Logs
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            {dashboardData.subtitle}
+          <p className="text-gray-600 dark:text-gray-400">
+            Complete audit trail of all system activities and data access
           </p>
-          <div className="flex items-center space-x-2 mt-2">
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${user ? getRoleColor(user.role) : ''}`}>
-              {user?.role.replace('_', ' ').toUpperCase()}
-            </span>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              Demo Mode Active
-            </span>
-          </div>
         </div>
-        <div className="mt-4 sm:mt-0">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-            <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
-            System Active
-          </span>
+        <button
+          onClick={handleExport}
+          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Export Logs
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <input
+                type="text"
+                placeholder="Search logs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+          </div>
+          <div>
+            <select
+              value={actionFilter}
+              onChange={(e) => setActionFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="all">All Actions</option>
+              <option value="export_contacts">Export Contacts</option>
+              <option value="create_event">Create Event</option>
+              <option value="create_email_campaign">Create Campaign</option>
+              <option value="failed_login">Failed Login</option>
+              <option value="upload_file">Upload File</option>
+              <option value="send_email_campaign">Send Campaign</option>
+              <option value="view_budget">View Budget</option>
+              <option value="assign_task">Assign Task</option>
+            </select>
+          </div>
+          <div>
+            <select
+              value={severityFilter}
+              onChange={(e) => setSeverityFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="all">All Severities</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div>
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="1d">Last 24 hours</option>
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="90d">Last 90 days</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      {dashboardData.stats.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {dashboardData.stats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <div key={index} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      {stat.label}
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                      {stat.value}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                    <Icon className={`h-6 w-6 ${stat.color}`} />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Quick Actions */}
-      {dashboardData.quickActions.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-              <TrendingUp className="h-5 w-5 mr-2 text-blue-500" />
-              Quick Actions
+      {/* Audit Logs Table */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              System Activity Log ({filteredLogs.length} entries)
             </h2>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {dashboardData.quickActions.map((action, index) => {
-                const Icon = action.icon;
-                return (
-                  <button
-                    key={index}
-                    onClick={action.action}
-                    className="p-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg text-left transition-colors"
-                  >
-                    <Icon className="h-6 w-6 text-blue-600 mb-2" />
-                    <p className="font-medium text-gray-900 dark:text-white text-sm">
-                      {action.label}
-                    </p>
-                  </button>
-                );
-              })}
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {selectedLogs.length} selected
+              </span>
+              {selectedLogs.length > 0 && (
+                <button
+                  onClick={() => setSelectedLogs([])}
+                  className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                >
+                  Clear selection
+                </button>
+              )}
             </div>
           </div>
         </div>
-      )}
+        
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th className="px-6 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={selectedLogs.length === filteredLogs.length && filteredLogs.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedLogs(filteredLogs.map(log => log.id));
+                      } else {
+                        setSelectedLogs([]);
+                      }
+                    }}
+                    className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                  />
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Timestamp
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  User
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Action
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Table
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Severity
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Details
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {filteredLogs.map((log) => (
+                <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={selectedLogs.includes(log.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedLogs([...selectedLogs, log.id]);
+                        } else {
+                          setSelectedLogs(selectedLogs.filter(id => id !== log.id));
+                        }
+                      }}
+                      className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 text-gray-400 mr-2" />
+                      <div>
+                        <div>{format(new Date(log.timestamp), 'MMM d, yyyy')}</div>
+                        <div className="text-xs text-gray-500">{format(new Date(log.timestamp), 'h:mm:ss a')}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <User className="h-4 w-4 text-gray-400 mr-2" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {log.user_name}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {log.ip_address}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                      {log.action.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    <div className="flex items-center">
+                      <Database className="h-4 w-4 text-gray-400 mr-2" />
+                      {log.table_name}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      {getSeverityIcon(log.severity)}
+                      <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getSeverityColor(log.severity)}`}>
+                        {log.severity}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {log.details && (
+                      <div className="max-w-xs">
+                        <details className="cursor-pointer">
+                          <summary className="text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                            View details
+                          </summary>
+                          <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded text-xs">
+                            <pre className="whitespace-pre-wrap">
+                              {JSON.stringify(log.details, null, 2)}
+                            </pre>
+                          </div>
+                        </details>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-      {/* Role-specific content */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Recent Activity
-          </h2>
-        </div>
-        <div className="p-6">
-          <div className="text-center py-8">
-            <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">
-              Activity feed will be populated with real-time data from Supabase
-            </p>
+        {filteredLogs.length === 0 && (
+          <div className="text-center py-12">
+            <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No audit logs found matching your criteria</p>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
-}
-
-function getRoleColor(role: string) {
-  const colors = {
-    'ceo': 'bg-purple-100 text-purple-800 border-purple-200',
-    'admin': 'bg-red-100 text-red-800 border-red-200',
-    'marketing': 'bg-blue-100 text-blue-800 border-blue-200',
-    'ae': 'bg-green-100 text-green-800 border-green-200',
-    'designer': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    'logistics': 'bg-orange-100 text-orange-800 border-orange-200',
-    'it': 'bg-indigo-100 text-indigo-800 border-indigo-200',
-    'team_lead': 'bg-pink-100 text-pink-800 border-pink-200',
-    'finance': 'bg-gray-100 text-gray-800 border-gray-200'
-  };
-  return colors[role as keyof typeof colors] || 'bg-gray-100 text-gray-800 border-gray-200';
 }

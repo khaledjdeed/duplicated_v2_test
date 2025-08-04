@@ -1,287 +1,223 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { 
-  Home,
+  Shield, 
+  Search, 
+  Filter, 
+  Download, 
+  Eye, 
   Calendar,
-  Users,
-  ClipboardList,
-  DollarSign,
-  Mail,
-  Settings,
-  Bell,
-  LogOut,
-  Menu,
-  X,
-  Upload,
-  BarChart3,
-  Brain,
-  Shield,
-  UserCog,
-  Building2,
-  ArrowLeft,
-  Target
+  User,
+  Database,
+  AlertTriangle,
+  CheckCircle,
+  Clock
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Breadcrumbs } from './Breadcrumbs';
+import { format } from 'date-fns';
+import toast from 'react-hot-toast';
 
-interface LayoutProps {
-  children: React.ReactNode;
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-  tabHistory: string[];
-  onGoBack: () => void;
+interface AuditLog {
+  id: string;
+  user_id: string;
+  user_name: string;
+  action: string;
+  table_name: string;
+  record_id?: string;
+  details?: Record<string, any>;
+  timestamp: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  ip_address?: string;
 }
 
-export function Layout({ children, activeTab, onTabChange, tabHistory, onGoBack }: LayoutProps) {
-  const { user, users, switchUser } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showUserSwitcher, setShowUserSwitcher] = useState(false);
+export function AuditLogsView() {
+  const { user, users } = useAuth();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [actionFilter, setActionFilter] = useState('all');
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [dateRange, setDateRange] = useState('7d');
+  const [selectedLogs, setSelectedLogs] = useState<string[]>([]);
 
-  const getNavItems = () => {
-    if (!user) return [];
+  // Mock audit logs data
+  const auditLogs: AuditLog[] = [
+    {
+      id: 'log1',
+      user_id: 'yousef-ceo',
+      user_name: 'Yousef Al-Rashid',
+      action: 'export_contacts',
+      table_name: 'contacts',
+      record_id: 'all',
+      details: { contact_count: 1234, export_format: 'csv' },
+      timestamp: '2024-12-01T14:30:00Z',
+      severity: 'medium',
+      ip_address: '192.168.1.100'
+    },
+    {
+      id: 'log2',
+      user_id: 'mariam-admin',
+      user_name: 'Mariam Wael',
+      action: 'create_email_campaign',
+      table_name: 'email_campaigns',
+      record_id: 'campaign-123',
+      details: { campaign_name: 'Healthcare Summit 2024', recipient_count: 856 },
+      timestamp: '2024-12-01T13:15:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.101'
+    },
+    {
+      id: 'log3',
+      user_id: 'imran-it',
+      user_name: 'Imran Khan',
+      action: 'create_event',
+      table_name: 'events',
+      record_id: 'event-456',
+      details: { event_name: 'Cardiology Conference 2024', budget: 150000 },
+      timestamp: '2024-12-01T12:45:00Z',
+      severity: 'high',
+      ip_address: '192.168.1.102'
+    },
+    {
+      id: 'log4',
+      user_id: 'samir-ae',
+      user_name: 'Samir Hassan',
+      action: 'failed_login',
+      table_name: 'auth',
+      details: { reason: 'invalid_password', attempts: 3 },
+      timestamp: '2024-12-01T11:20:00Z',
+      severity: 'critical',
+      ip_address: '192.168.1.103'
+    },
+    {
+      id: 'log5',
+      user_id: 'joel-designer',
+      user_name: 'Joel Mutia',
+      action: 'upload_file',
+      table_name: 'uploads',
+      record_id: 'upload-789',
+      details: { file_name: 'conference-banner.png', file_size: 2048000 },
+      timestamp: '2024-12-01T10:30:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.104'
+    },
+    {
+      id: 'log6',
+      user_id: 'layla-marketing',
+      user_name: 'Layla Al-Zahra',
+      action: 'send_email_campaign',
+      table_name: 'email_campaigns',
+      record_id: 'campaign-124',
+      details: { emails_sent: 1247, success_rate: 96.2 },
+      timestamp: '2024-12-01T09:15:00Z',
+      severity: 'medium',
+      ip_address: '192.168.1.105'
+    },
+    {
+      id: 'log7',
+      user_id: 'yousef-ceo',
+      user_name: 'Yousef Al-Rashid',
+      action: 'view_budget',
+      table_name: 'budgets',
+      record_id: 'budget-all',
+      details: { total_budget_viewed: 2400000 },
+      timestamp: '2024-11-30T16:45:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.100'
+    },
+    {
+      id: 'log8',
+      user_id: 'ahmed-teamlead',
+      user_name: 'Ahmed Al-Maktoum',
+      action: 'assign_task',
+      table_name: 'tasks',
+      record_id: 'task-890',
+      details: { task_title: 'Design Event Materials', assigned_to: 'Joel Mutia' },
+      timestamp: '2024-11-30T15:20:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.106'
+    }
+  ];
 
-    const baseItems = [
-      { id: 'dashboard', label: 'Dashboard', icon: Home }
-    ];
-
-    const roleSpecificItems = [];
-
-    switch (user.role) {
-      case 'ceo':
-        roleSpecificItems.push(
-          { id: 'events', label: 'All Events', icon: Calendar },
-          { id: 'pods', label: 'Pod Management', icon: Building2 },
-          { id: 'budgets', label: 'Budget Overview', icon: DollarSign },
-          { id: 'contacts', label: 'Contact Directory', icon: Users },
-          { id: 'email-campaigns', label: 'Email Campaigns', icon: Mail },
-          { id: 'sponsorships', label: 'Sponsorships', icon: Target },
-          { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-          { id: 'ai-assistant', label: 'AI Assistant', icon: Brain },
-          { id: 'audit-logs', label: 'Audit Logs', icon: Shield },
-          { id: 'user-management', label: 'User Management', icon: UserCog },
-          { id: 'settings', label: 'Settings', icon: Settings }
-        );
-        break;
-
-      case 'admin':
-        roleSpecificItems.push(
-          { id: 'events', label: 'Events', icon: Calendar },
-          { id: 'contacts', label: 'Contact Directory', icon: Users },
-          { id: 'email-campaigns', label: 'Email Campaigns', icon: Mail },
-          { id: 'budgets', label: 'Budgets', icon: DollarSign },
-          { id: 'sponsorships', label: 'Sponsorships', icon: Target },
-          { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-          { id: 'audit-logs', label: 'Audit Logs', icon: Shield },
-          { id: 'user-management', label: 'User Management', icon: UserCog }
-        );
-        break;
-
-      case 'marketing':
-        roleSpecificItems.push(
-          { id: 'email-campaigns', label: 'Email Campaigns', icon: Mail },
-          { id: 'contacts', label: 'Contacts (Limited)', icon: Users },
-          { id: 'analytics', label: 'Campaign Analytics', icon: BarChart3 }
-        );
-        break;
-
-      case 'ae':
-        roleSpecificItems.push(
-          { id: 'my-events', label: 'My Events', icon: Calendar },
-          { id: 'tasks', label: 'My Tasks', icon: ClipboardList },
-          { id: 'event-requests', label: 'Request Event', icon: Bell },
-          { id: 'budgets', label: 'Event Budgets', icon: DollarSign }
-        );
-        break;
-
-      case 'designer':
-        roleSpecificItems.push(
-          { id: 'tasks', label: 'My Tasks', icon: ClipboardList },
-          { id: 'uploads', label: 'File Uploads', icon: Upload },
-          { id: 'pod-overview', label: 'Pod Overview', icon: Building2 }
-        );
-        break;
-
-      case 'logistics':
-        roleSpecificItems.push(
-          { id: 'tasks', label: 'My Tasks', icon: ClipboardList },
-          { id: 'pod-overview', label: 'Pod Overview', icon: Building2 }
-        );
-        break;
-
-      case 'it':
-        roleSpecificItems.push(
-          { id: 'event-creation', label: 'Create Events', icon: Calendar },
-          { id: 'event-requests', label: 'Event Requests', icon: Bell },
-          { id: 'events', label: 'All Events', icon: Calendar },
-          { id: 'tasks', label: 'All Tasks', icon: ClipboardList },
-          { id: 'budgets', label: 'Budget Overview', icon: DollarSign },
-          { id: 'sponsorships', label: 'Sponsorships', icon: Target },
-          { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-          { id: 'user-management', label: 'User Management', icon: UserCog },
-          { id: 'system-settings', label: 'System Settings', icon: Settings }
-        );
-        break;
-
-      case 'team_lead':
-        roleSpecificItems.push(
-          { id: 'team-tasks', label: 'Team Tasks', icon: ClipboardList },
-          { id: 'pod-overview', label: 'Pod Overview', icon: Building2 },
-          { id: 'team-analytics', label: 'Team Analytics', icon: BarChart3 }
-        );
-        break;
-
-      case 'finance':
-        // Finance role has no UI access as specified
-        break;
+  const handleExport = () => {
+    if (!['ceo', 'admin'].includes(user?.role || '')) {
+      toast.error('You do not have permission to export audit logs');
+      return;
     }
 
-    return [...baseItems, ...roleSpecificItems];
-  };
-
-  const navItems = getNavItems();
-
-  const getRoleColor = (role: string) => {
-    const colors = {
-      'ceo': 'bg-purple-100 text-purple-800 border-purple-200',
-      'admin': 'bg-red-100 text-red-800 border-red-200',
-      'marketing': 'bg-blue-100 text-blue-800 border-blue-200',
-      'ae': 'bg-green-100 text-green-800 border-green-200',
-      'designer': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'logistics': 'bg-orange-100 text-orange-800 border-orange-200',
-      'it': 'bg-indigo-100 text-indigo-800 border-indigo-200',
-      'team_lead': 'bg-pink-100 text-pink-800 border-pink-200',
-      'finance': 'bg-gray-100 text-gray-800 border-gray-200'
+    // Log the export action
+    const exportLogEntry: AuditLog = {
+      id: `log-${Date.now()}`,
+      user_id: user?.id || '',
+      user_name: user?.full_name || '',
+      action: 'export_audit_logs',
+      table_name: 'audit_logs',
+      details: { 
+        log_count: selectedLogs.length || auditLogs.length,
+        export_format: 'csv',
+        filters: { action: actionFilter, severity: severityFilter, date_range: dateRange }
+      },
+      timestamp: new Date().toISOString(),
+      severity: 'medium',
+      ip_address: '192.168.1.100'
     };
-    return colors[role as keyof typeof colors] || 'bg-gray-100 text-gray-800 border-gray-200';
+
+    console.log('Audit log export:', exportLogEntry);
+    toast.success(`Exported ${selectedLogs.length || auditLogs.length} audit log entries`);
   };
 
-  const sidebarContent = (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-2">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            MCO
-          </h1>
-          <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full font-medium">
-            DEMO
-          </span>
-        </div>
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="md:hidden p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'critical': return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      case 'high': return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+      case 'medium': return <Eye className="h-4 w-4 text-yellow-500" />;
+      case 'low': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      default: return <Clock className="h-4 w-4 text-gray-500" />;
+    }
+  };
 
-      {user && (
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="relative">
-            <button
-              onClick={() => setShowUserSwitcher(!showUserSwitcher)}
-              className="w-full flex items-center space-x-3 p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
-            >
-              <img
-                src={user.avatar_url}
-                alt={user.full_name}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-              <div className="flex-1 text-left">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {user.full_name}
-                </p>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getRoleColor(user.role)}`}>
-                  {user.role.replace('_', ' ').toUpperCase()}
-                </span>
-              </div>
-            </button>
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
+      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
 
-            {showUserSwitcher && (
-              <div className="absolute top-full left-0 mt-1 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-64 overflow-y-auto">
-                <div className="p-2">
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 px-3 py-2 border-b border-gray-100 dark:border-gray-700">
-                    Switch Demo User
-                  </div>
-                  {users.map((demoUser) => (
-                    <button
-                      key={demoUser.id}
-                      onClick={() => {
-                        switchUser(demoUser.id);
-                        setShowUserSwitcher(false);
-                      }}
-                      className={`w-full flex items-center space-x-3 p-3 rounded-md text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                        user.id === demoUser.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                      }`}
-                    >
-                      <img
-                        src={demoUser.avatar_url}
-                        alt={demoUser.full_name}
-                        className="w-6 h-6 rounded-full object-cover"
-                      />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          {demoUser.full_name}
-                        </p>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getRoleColor(demoUser.role)}`}>
-                          {demoUser.role.replace('_', ' ').toUpperCase()}
-                        </span>
-                      </div>
-                      {user.id === demoUser.id && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+  const filteredLogs = auditLogs.filter(log => {
+    const matchesSearch = log.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.table_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesAction = actionFilter === 'all' || log.action === actionFilter;
+    const matchesSeverity = severityFilter === 'all' || log.severity === severityFilter;
+    
+    // Date filtering
+    const logDate = new Date(log.timestamp);
+    const now = new Date();
+    const daysDiff = Math.floor((now.getTime() - logDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    let matchesDate = true;
+    switch (dateRange) {
+      case '1d': matchesDate = daysDiff <= 1; break;
+      case '7d': matchesDate = daysDiff <= 7; break;
+      case '30d': matchesDate = daysDiff <= 30; break;
+      case '90d': matchesDate = daysDiff <= 90; break;
+    }
+    
+    return matchesSearch && matchesAction && matchesSeverity && matchesDate;
+  });
 
-      <div className="flex-1 overflow-y-auto p-4">
-        <nav className="space-y-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  onTabChange(item.id);
-                  setSidebarOpen(false);
-                }}
-                className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                  activeTab === item.id
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                <span className="text-sm font-medium">{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-      </div>
+  const canViewAuditLogs = ['ceo', 'admin'].includes(user?.role || '');
 
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-          <p>Demo Mode - Role-Based Access</p>
-          <p>Switch users above to test permissions</p>
-        </div>
-      </div>
-    </div>
-  );
-
-  if (user?.role === 'finance') {
+  if (!canViewAuditLogs) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+      <div className="p-6">
+        <div className="text-center py-12">
+          <Shield className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            No UI Access
+            Access Restricted
           </h2>
           <p className="text-gray-500 dark:text-gray-400">
-            Finance role has data-only access as per organizational policy.
+            Audit logs are restricted to CEO and Admin roles only.
           </p>
         </div>
       </div>
@@ -289,88 +225,233 @@ export function Layout({ children, activeTab, onTabChange, tabHistory, onGoBack 
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Mobile sidebar overlay */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 md:hidden"
-          >
-            <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-            <motion.div
-              initial={{ x: -300 }}
-              animate={{ x: 0 }}
-              exit={{ x: -300 }}
-              className="absolute left-0 top-0 h-full w-80 bg-white dark:bg-gray-800 shadow-xl"
-            >
-              {sidebarContent}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+            <Shield className="h-6 w-6 mr-2 text-red-600" />
+            Audit Logs
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Complete audit trail of all system activities and data access
+          </p>
+        </div>
+        <button
+          onClick={handleExport}
+          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Export Logs
+        </button>
+      </div>
 
-      {/* Desktop sidebar */}
-      <div className="hidden md:flex md:flex-shrink-0">
-        <div className="w-64 bg-white dark:bg-gray-800 shadow-sm border-r border-gray-200 dark:border-gray-700">
-          {sidebarContent}
+      {/* Filters */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <input
+                type="text"
+                placeholder="Search logs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+          </div>
+          <div>
+            <select
+              value={actionFilter}
+              onChange={(e) => setActionFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="all">All Actions</option>
+              <option value="export_contacts">Export Contacts</option>
+              <option value="create_event">Create Event</option>
+              <option value="create_email_campaign">Create Campaign</option>
+              <option value="failed_login">Failed Login</option>
+              <option value="upload_file">Upload File</option>
+              <option value="send_email_campaign">Send Campaign</option>
+              <option value="view_budget">View Budget</option>
+              <option value="assign_task">Assign Task</option>
+            </select>
+          </div>
+          <div>
+            <select
+              value={severityFilter}
+              onChange={(e) => setSeverityFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="all">All Severities</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div>
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="1d">Last 24 hours</option>
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="90d">Last 90 days</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile header */}
-        <div className="md:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+      {/* Audit Logs Table */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                MCO
-              </h1>
-              <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full font-medium">
-                DEMO
-              </span>
-            </div>
-            <div className="w-10" />
-          </div>
-        </div>
-
-        {/* Desktop header with navigation */}
-        <div className="hidden md:block bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              {tabHistory.length > 1 && (
-                <button
-                  onClick={onGoBack}
-                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-1" />
-                  Back
-                </button>
-              )}
-              <Breadcrumbs activeTab={activeTab} tabHistory={tabHistory} />
-            </div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              System Activity Log ({filteredLogs.length} entries)
+            </h2>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                {user?.full_name}
+                {selectedLogs.length} selected
               </span>
-              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getRoleColor(user?.role || '')}`}>
-                {user?.role.replace('_', ' ').toUpperCase()}
-              </span>
+              {selectedLogs.length > 0 && (
+                <button
+                  onClick={() => setSelectedLogs([])}
+                  className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                >
+                  Clear selection
+                </button>
+              )}
             </div>
           </div>
         </div>
-        {/* Page content */}
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th className="px-6 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={selectedLogs.length === filteredLogs.length && filteredLogs.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedLogs(filteredLogs.map(log => log.id));
+                      } else {
+                        setSelectedLogs([]);
+                      }
+                    }}
+                    className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                  />
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Timestamp
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  User
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Action
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Table
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Severity
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Details
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {filteredLogs.map((log) => (
+                <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={selectedLogs.includes(log.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedLogs([...selectedLogs, log.id]);
+                        } else {
+                          setSelectedLogs(selectedLogs.filter(id => id !== log.id));
+                        }
+                      }}
+                      className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 text-gray-400 mr-2" />
+                      <div>
+                        <div>{format(new Date(log.timestamp), 'MMM d, yyyy')}</div>
+                        <div className="text-xs text-gray-500">{format(new Date(log.timestamp), 'h:mm:ss a')}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <User className="h-4 w-4 text-gray-400 mr-2" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {log.user_name}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {log.ip_address}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                      {log.action.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    <div className="flex items-center">
+                      <Database className="h-4 w-4 text-gray-400 mr-2" />
+                      {log.table_name}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      {getSeverityIcon(log.severity)}
+                      <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getSeverityColor(log.severity)}`}>
+                        {log.severity}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {log.details && (
+                      <div className="max-w-xs">
+                        <details className="cursor-pointer">
+                          <summary className="text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                            View details
+                          </summary>
+                          <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded text-xs">
+                            <pre className="whitespace-pre-wrap">
+                              {JSON.stringify(log.details, null, 2)}
+                            </pre>
+                          </div>
+                        </details>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {filteredLogs.length === 0 && (
+          <div className="text-center py-12">
+            <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No audit logs found matching your criteria</p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,489 +1,458 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { 
-  Settings, 
   Shield, 
-  Database, 
-  Mail, 
-  Bell, 
-  Globe, 
-  Lock, 
-  Server,
-  Save,
-  RefreshCw,
+  Search, 
+  Filter, 
+  Download, 
+  Eye, 
+  Calendar,
+  User,
+  Database,
   AlertTriangle,
-  CheckCircle
-} from 'lucide-react';
+        <EmptyState
+          icon={Shield}
+          title="Access Restricted"
+          description="System settings are restricted to IT administrators only."
+        />
 import toast from 'react-hot-toast';
 
-export function SystemSettings() {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('general');
-  const [settings, setSettings] = useState({
-    general: {
-      site_name: 'MCOpro',
-      site_description: 'Professional Healthcare Event Management System for UAE Medical Professionals',
-      timezone: 'America/New_York',
-      date_format: 'MM/dd/yyyy',
-      language: 'en'
+interface AuditLog {
+  id: string;
+  user_id: string;
+  user_name: string;
+  action: string;
+  table_name: string;
+  record_id?: string;
+  details?: Record<string, any>;
+  timestamp: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  ip_address?: string;
+}
+
+export function AuditLogsView() {
+  const { user, users } = useAuth();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [actionFilter, setActionFilter] = useState('all');
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [dateRange, setDateRange] = useState('7d');
+  const [selectedLogs, setSelectedLogs] = useState<string[]>([]);
+
+  // Mock audit logs data
+  const auditLogs: AuditLog[] = [
+    {
+      id: 'log1',
+      user_id: 'yousef-ceo',
+      user_name: 'Yousef Al-Rashid',
+      action: 'export_contacts',
+      table_name: 'contacts',
+      record_id: 'all',
+      details: { contact_count: 1234, export_format: 'csv' },
+      timestamp: '2024-12-01T14:30:00Z',
+      severity: 'medium',
+      ip_address: '192.168.1.100'
     },
-    security: {
-      password_min_length: 8,
-      require_2fa: false,
-      session_timeout: 24,
-      max_login_attempts: 5,
-      password_expiry_days: 90
+    {
+      id: 'log2',
+      user_id: 'mariam-admin',
+      user_name: 'Mariam Wael',
+      action: 'create_email_campaign',
+      table_name: 'email_campaigns',
+      record_id: 'campaign-123',
+      details: { campaign_name: 'Healthcare Summit 2024', recipient_count: 856 },
+      timestamp: '2024-12-01T13:15:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.101'
     },
-    notifications: {
-      email_notifications: true,
-      push_notifications: true,
-      task_reminders: true,
-      event_updates: true,
-      system_alerts: true
+    {
+      id: 'log3',
+      user_id: 'imran-it',
+      user_name: 'Imran Khan',
+      action: 'create_event',
+      table_name: 'events',
+      record_id: 'event-456',
+      details: { event_name: 'Cardiology Conference 2024', budget: 150000 },
+      timestamp: '2024-12-01T12:45:00Z',
+      severity: 'high',
+      ip_address: '192.168.1.102'
     },
-    integrations: {
-      smtp_host: 'smtp.gmail.com',
-      smtp_port: 587,
-      smtp_username: '',
-      smtp_password: '',
-      calendar_sync: false,
-      slack_webhook: ''
+    {
+      id: 'log4',
+      user_id: 'samir-ae',
+      user_name: 'Samir Hassan',
+      action: 'failed_login',
+      table_name: 'auth',
+      details: { reason: 'invalid_password', attempts: 3 },
+      timestamp: '2024-12-01T11:20:00Z',
+      severity: 'critical',
+      ip_address: '192.168.1.103'
+    },
+    {
+      id: 'log5',
+      user_id: 'joel-designer',
+      user_name: 'Joel Mutia',
+      action: 'upload_file',
+      table_name: 'uploads',
+      record_id: 'upload-789',
+      details: { file_name: 'conference-banner.png', file_size: 2048000 },
+      timestamp: '2024-12-01T10:30:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.104'
+    },
+    {
+      id: 'log6',
+      user_id: 'layla-marketing',
+      user_name: 'Layla Al-Zahra',
+      action: 'send_email_campaign',
+      table_name: 'email_campaigns',
+      record_id: 'campaign-124',
+      details: { emails_sent: 1247, success_rate: 96.2 },
+      timestamp: '2024-12-01T09:15:00Z',
+      severity: 'medium',
+      ip_address: '192.168.1.105'
+    },
+    {
+      id: 'log7',
+      user_id: 'yousef-ceo',
+      user_name: 'Yousef Al-Rashid',
+      action: 'view_budget',
+      table_name: 'budgets',
+      record_id: 'budget-all',
+      details: { total_budget_viewed: 2400000 },
+      timestamp: '2024-11-30T16:45:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.100'
+    },
+    {
+      id: 'log8',
+      user_id: 'ahmed-teamlead',
+      user_name: 'Ahmed Al-Maktoum',
+      action: 'assign_task',
+      table_name: 'tasks',
+      record_id: 'task-890',
+      details: { task_title: 'Design Event Materials', assigned_to: 'Joel Mutia' },
+      timestamp: '2024-11-30T15:20:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.106'
     }
-  });
+  ];
 
-  const handleSettingChange = (category: string, key: string, value: any) => {
-    setSettings(prev => ({
-      ...prev,
-      [category]: {
-        ...prev[category as keyof typeof prev],
-        [key]: value
-      }
-    }));
-  };
+  const handleExport = () => {
+    if (!['ceo', 'admin'].includes(user?.role || '')) {
+      toast.error('You do not have permission to export audit logs');
+      return;
+    }
 
-  const handleSave = (category: string) => {
-    // Log the settings change
-    const logEntry = {
-      user_id: user?.id,
-      action: 'update_system_settings',
-      table_name: 'system_settings',
+    // Log the export action
+    const exportLogEntry: AuditLog = {
+      id: `log-${Date.now()}`,
+      user_id: user?.id || '',
+      user_name: user?.full_name || '',
+      action: 'export_audit_logs',
+      table_name: 'audit_logs',
       details: { 
-        category,
-        settings: settings[category as keyof typeof settings]
+        log_count: selectedLogs.length || auditLogs.length,
+        export_format: 'csv',
+        filters: { action: actionFilter, severity: severityFilter, date_range: dateRange }
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      severity: 'medium',
+      ip_address: '192.168.1.100'
     };
 
-    console.log('Settings update logged:', logEntry);
-    toast.success(`${category.charAt(0).toUpperCase() + category.slice(1)} settings saved successfully`);
+    console.log('Audit log export:', exportLogEntry);
+    toast.success(`Exported ${selectedLogs.length || auditLogs.length} audit log entries`);
   };
 
-  if (user?.role !== 'it') {
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'critical': return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      case 'high': return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+      case 'medium': return <Eye className="h-4 w-4 text-yellow-500" />;
+      case 'low': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      default: return <Clock className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
+      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const filteredLogs = auditLogs.filter(log => {
+    const matchesSearch = log.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.table_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesAction = actionFilter === 'all' || log.action === actionFilter;
+    const matchesSeverity = severityFilter === 'all' || log.severity === severityFilter;
+    
+    // Date filtering
+    const logDate = new Date(log.timestamp);
+    const now = new Date();
+    const daysDiff = Math.floor((now.getTime() - logDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    let matchesDate = true;
+    switch (dateRange) {
+      case '1d': matchesDate = daysDiff <= 1; break;
+      case '7d': matchesDate = daysDiff <= 7; break;
+      case '30d': matchesDate = daysDiff <= 30; break;
+      case '90d': matchesDate = daysDiff <= 90; break;
+    }
+    
+    return matchesSearch && matchesAction && matchesSeverity && matchesDate;
+  });
+
+  const canViewAuditLogs = ['ceo', 'admin'].includes(user?.role || '');
+
+  if (!canViewAuditLogs) {
     return (
       <div className="p-6">
         <div className="text-center py-12">
           <Shield className="h-12 w-12 text-red-400 mx-auto mb-4" />
-          <p className="text-red-600 dark:text-red-400 font-semibold">Access Denied</p>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">
-            System settings are restricted to IT administrators only.
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Access Restricted
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400">
+            Audit logs are restricted to CEO and Admin roles only.
           </p>
         </div>
       </div>
     );
   }
 
-  const tabs = [
-    { id: 'general', label: 'General', icon: Settings },
-    { id: 'security', label: 'Security', icon: Lock },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'integrations', label: 'Integrations', icon: Globe }
-  ];
-
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-            <Settings className="h-6 w-6 mr-2 text-blue-600" />
-            System Settings
+            <Shield className="h-6 w-6 mr-2 text-red-600" />
+            Audit Logs
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Configure system-wide settings and preferences
+            Complete audit trail of all system activities and data access
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-            <CheckCircle className="h-3 w-3 mr-1" />
-            System Online
-          </span>
+        <button
+          onClick={handleExport}
+          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Export Logs
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <input
+                type="text"
+                placeholder="Search logs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+          </div>
+          <div>
+            <select
+              value={actionFilter}
+              onChange={(e) => setActionFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="all">All Actions</option>
+              <option value="export_contacts">Export Contacts</option>
+              <option value="create_event">Create Event</option>
+              <option value="create_email_campaign">Create Campaign</option>
+              <option value="failed_login">Failed Login</option>
+              <option value="upload_file">Upload File</option>
+              <option value="send_email_campaign">Send Campaign</option>
+              <option value="view_budget">View Budget</option>
+              <option value="assign_task">Assign Task</option>
+            </select>
+          </div>
+          <div>
+            <select
+              value={severityFilter}
+              onChange={(e) => setSeverityFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="all">All Severities</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div>
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="1d">Last 24 hours</option>
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="90d">Last 90 days</option>
+            </select>
+          </div>
         </div>
       </div>
 
+      {/* Audit Logs Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        {/* Tab Navigation */}
-        <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="flex space-x-8 px-6">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              System Activity Log ({filteredLogs.length} entries)
+            </h2>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {selectedLogs.length} selected
+              </span>
+              {selectedLogs.length > 0 && (
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                  }`}
+                  onClick={() => setSelectedLogs([])}
+                  className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
                 >
-                  <Icon className="h-4 w-4" />
-                  <span>{tab.label}</span>
+                  Clear selection
                 </button>
-              );
-            })}
-          </nav>
+              )}
+            </div>
+          </div>
         </div>
-
-        <div className="p-6">
-          {activeTab === 'general' && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">General Settings</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Site Name
-                  </label>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th className="px-6 py-3 text-left">
                   <input
-                    type="text"
-                    value={settings.general.site_name}
-                    onChange={(e) => handleSettingChange('general', 'site_name', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    type="checkbox"
+                    checked={selectedLogs.length === filteredLogs.length && filteredLogs.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedLogs(filteredLogs.map(log => log.id));
+                      } else {
+                        setSelectedLogs([]);
+                      }
+                    }}
+                    className="rounded border-gray-300 text-red-600 focus:ring-red-500"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Timezone
-                  </label>
-                  <select
-                    value={settings.general.timezone}
-                    onChange={(e) => handleSettingChange('general', 'timezone', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="America/New_York">Eastern Time</option>
-                    <option value="America/Chicago">Central Time</option>
-                    <option value="America/Denver">Mountain Time</option>
-                    <option value="America/Los_Angeles">Pacific Time</option>
-                    <option value="UTC">UTC</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Date Format
-                  </label>
-                  <select
-                    value={settings.general.date_format}
-                    onChange={(e) => handleSettingChange('general', 'date_format', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="MM/dd/yyyy">MM/DD/YYYY</option>
-                    <option value="dd/MM/yyyy">DD/MM/YYYY</option>
-                    <option value="yyyy-MM-dd">YYYY-MM-DD</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Language
-                  </label>
-                  <select
-                    value={settings.general.language}
-                    onChange={(e) => handleSettingChange('general', 'language', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="en">English</option>
-                    <option value="es">Spanish</option>
-                    <option value="fr">French</option>
-                    <option value="de">German</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Site Description
-                </label>
-                <textarea
-                  rows={3}
-                  value={settings.general.site_description}
-                  onChange={(e) => handleSettingChange('general', 'site_description', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-
-              <button
-                onClick={() => handleSave('general')}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save General Settings
-              </button>
-            </div>
-          )}
-
-          {activeTab === 'security' && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Security Settings</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Minimum Password Length
-                  </label>
-                  <input
-                    type="number"
-                    min="6"
-                    max="20"
-                    value={settings.security.password_min_length}
-                    onChange={(e) => handleSettingChange('security', 'password_min_length', Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Session Timeout (hours)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="168"
-                    value={settings.security.session_timeout}
-                    onChange={(e) => handleSettingChange('security', 'session_timeout', Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Max Login Attempts
-                  </label>
-                  <input
-                    type="number"
-                    min="3"
-                    max="10"
-                    value={settings.security.max_login_attempts}
-                    onChange={(e) => handleSettingChange('security', 'max_login_attempts', Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Password Expiry (days)
-                  </label>
-                  <input
-                    type="number"
-                    min="30"
-                    max="365"
-                    value={settings.security.password_expiry_days}
-                    onChange={(e) => handleSettingChange('security', 'password_expiry_days', Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div>
-                  <label className="text-sm font-medium text-gray-900 dark:text-white">
-                    Require Two-Factor Authentication
-                  </label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Force all users to enable 2FA for enhanced security
-                  </p>
-                </div>
-                <button
-                  onClick={() => handleSettingChange('security', 'require_2fa', !settings.security.require_2fa)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    settings.security.require_2fa ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      settings.security.require_2fa ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              <button
-                onClick={() => handleSave('security')}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save Security Settings
-              </button>
-            </div>
-          )}
-
-          {activeTab === 'notifications' && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notification Settings</h3>
-              
-              <div className="space-y-4">
-                {Object.entries(settings.notifications).map(([key, value]) => (
-                  <div key={key} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <div>
-                      <label className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                        {key.replace('_', ' ')}
-                      </label>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {key === 'email_notifications' && 'Send notifications via email'}
-                        {key === 'push_notifications' && 'Send browser push notifications'}
-                        {key === 'task_reminders' && 'Remind users about upcoming task deadlines'}
-                        {key === 'event_updates' && 'Notify about event changes and updates'}
-                        {key === 'system_alerts' && 'Send system maintenance and error alerts'}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleSettingChange('notifications', key, !value)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        value ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          value ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => handleSave('notifications')}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save Notification Settings
-              </button>
-            </div>
-          )}
-
-          {activeTab === 'integrations' && (
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Integration Settings</h3>
-              
-              <div className="space-y-6">
-                <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                  <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4 flex items-center">
-                    <Mail className="h-5 w-5 mr-2" />
-                    Email Configuration (SMTP)
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        SMTP Host
-                      </label>
-                      <input
-                        type="text"
-                        value={settings.integrations.smtp_host}
-                        onChange={(e) => handleSettingChange('integrations', 'smtp_host', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        SMTP Port
-                      </label>
-                      <input
-                        type="number"
-                        value={settings.integrations.smtp_port}
-                        onChange={(e) => handleSettingChange('integrations', 'smtp_port', Number(e.target.value))}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Username
-                      </label>
-                      <input
-                        type="text"
-                        value={settings.integrations.smtp_username}
-                        onChange={(e) => handleSettingChange('integrations', 'smtp_username', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Password
-                      </label>
-                      <input
-                        type="password"
-                        value={settings.integrations.smtp_password}
-                        onChange={(e) => handleSettingChange('integrations', 'smtp_password', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                  <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4">
-                    External Integrations
-                  </h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Timestamp
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  User
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Action
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Table
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Severity
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Details
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {filteredLogs.map((log) => (
+                <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={selectedLogs.includes(log.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedLogs([...selectedLogs, log.id]);
+                        } else {
+                          setSelectedLogs(selectedLogs.filter(id => id !== log.id));
+                        }
+                      }}
+                      className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 text-gray-400 mr-2" />
                       <div>
-                        <label className="text-sm font-medium text-gray-900 dark:text-white">
-                          Calendar Sync
-                        </label>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Sync events with external calendar services
-                        </p>
+                        <div>{format(new Date(log.timestamp), 'MMM d, yyyy')}</div>
+                        <div className="text-xs text-gray-500">{format(new Date(log.timestamp), 'h:mm:ss a')}</div>
                       </div>
-                      <button
-                        onClick={() => handleSettingChange('integrations', 'calendar_sync', !settings.integrations.calendar_sync)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          settings.integrations.calendar_sync ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            settings.integrations.calendar_sync ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
                     </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Slack Webhook URL
-                      </label>
-                      <input
-                        type="url"
-                        value={settings.integrations.slack_webhook}
-                        onChange={(e) => handleSettingChange('integrations', 'slack_webhook', e.target.value)}
-                        placeholder="https://hooks.slack.com/services/..."
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                      />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <User className="h-4 w-4 text-gray-400 mr-2" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {log.user_name}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {log.ip_address}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => handleSave('integrations')}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save Integration Settings
-              </button>
-            </div>
-          )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                      {log.action.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    <div className="flex items-center">
+                      <Database className="h-4 w-4 text-gray-400 mr-2" />
+                      {log.table_name}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      {getSeverityIcon(log.severity)}
+                      <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getSeverityColor(log.severity)}`}>
+                        {log.severity}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {log.details && (
+                      <div className="max-w-xs">
+                        <details className="cursor-pointer">
+                          <summary className="text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                            View details
+                          </summary>
+                          <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded text-xs">
+                            <pre className="whitespace-pre-wrap">
+                              {JSON.stringify(log.details, null, 2)}
+                            </pre>
+                          </div>
+                        </details>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+
+        {filteredLogs.length === 0 && (
+          <div className="text-center py-12">
+            <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No audit logs found matching your criteria</p>
+          </div>
+        )}
       </div>
     </div>
   );

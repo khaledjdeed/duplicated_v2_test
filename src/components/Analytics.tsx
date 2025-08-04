@@ -1,106 +1,224 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { 
-  BarChart3, 
-  TrendingUp, 
-  TrendingDown, 
-  Calendar, 
-  Users, 
-  DollarSign, 
-  Target,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  Activity
-} from 'lucide-react';
+  Shield, 
+  Search, 
+  Filter, 
+  Download, 
+  Eye, 
+  Calendar,
+  User,
+  Database,
+  AlertTriangle,
+        <EmptyState
+          icon={BarChart3}
+          title="Access Restricted"
+          description="Analytics dashboard is restricted to authorized roles only."
+        />
+import toast from 'react-hot-toast';
 
-export function Analytics() {
-  const { user, events, tasks, budgets, sponsorships } = useAuth();
-  const [timeRange, setTimeRange] = useState('30d');
-  const [showCustomRange, setShowCustomRange] = useState(false);
-  const [customDateRange, setCustomDateRange] = useState({
-    startDate: '',
-    endDate: ''
-  });
+interface AuditLog {
+  id: string;
+  user_id: string;
+  user_name: string;
+  action: string;
+  table_name: string;
+  record_id?: string;
+  details?: Record<string, any>;
+  timestamp: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  ip_address?: string;
+}
 
-  // Calculate real analytics from data
-  const calculateAnalytics = () => {
-    const totalEvents = events.length;
-    const activeTasks = tasks.filter(t => t.status !== 'completed').length;
-    const totalBudget = budgets.reduce((sum, b) => sum + b.allocated_amount, 0);
-    const teamMembers = 47; // Mock value
+export function AuditLogsView() {
+  const { user, users } = useAuth();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [actionFilter, setActionFilter] = useState('all');
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [dateRange, setDateRange] = useState('7d');
+  const [selectedLogs, setSelectedLogs] = useState<string[]>([]);
 
-    const eventMetrics = {
-      completed: events.filter(e => e.status === 'completed').length,
-      active: events.filter(e => e.status === 'active').length,
-      planning: events.filter(e => e.status === 'planning').length,
-      cancelled: events.filter(e => e.status === 'cancelled').length
-    };
+  // Mock audit logs data
+  const auditLogs: AuditLog[] = [
+    {
+      id: 'log1',
+      user_id: 'yousef-ceo',
+      user_name: 'Yousef Al-Rashid',
+      action: 'export_contacts',
+      table_name: 'contacts',
+      record_id: 'all',
+      details: { contact_count: 1234, export_format: 'csv' },
+      timestamp: '2024-12-01T14:30:00Z',
+      severity: 'medium',
+      ip_address: '192.168.1.100'
+    },
+    {
+      id: 'log2',
+      user_id: 'mariam-admin',
+      user_name: 'Mariam Wael',
+      action: 'create_email_campaign',
+      table_name: 'email_campaigns',
+      record_id: 'campaign-123',
+      details: { campaign_name: 'Healthcare Summit 2024', recipient_count: 856 },
+      timestamp: '2024-12-01T13:15:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.101'
+    },
+    {
+      id: 'log3',
+      user_id: 'imran-it',
+      user_name: 'Imran Khan',
+      action: 'create_event',
+      table_name: 'events',
+      record_id: 'event-456',
+      details: { event_name: 'Cardiology Conference 2024', budget: 150000 },
+      timestamp: '2024-12-01T12:45:00Z',
+      severity: 'high',
+      ip_address: '192.168.1.102'
+    },
+    {
+      id: 'log4',
+      user_id: 'samir-ae',
+      user_name: 'Samir Hassan',
+      action: 'failed_login',
+      table_name: 'auth',
+      details: { reason: 'invalid_password', attempts: 3 },
+      timestamp: '2024-12-01T11:20:00Z',
+      severity: 'critical',
+      ip_address: '192.168.1.103'
+    },
+    {
+      id: 'log5',
+      user_id: 'joel-designer',
+      user_name: 'Joel Mutia',
+      action: 'upload_file',
+      table_name: 'uploads',
+      record_id: 'upload-789',
+      details: { file_name: 'conference-banner.png', file_size: 2048000 },
+      timestamp: '2024-12-01T10:30:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.104'
+    },
+    {
+      id: 'log6',
+      user_id: 'layla-marketing',
+      user_name: 'Layla Al-Zahra',
+      action: 'send_email_campaign',
+      table_name: 'email_campaigns',
+      record_id: 'campaign-124',
+      details: { emails_sent: 1247, success_rate: 96.2 },
+      timestamp: '2024-12-01T09:15:00Z',
+      severity: 'medium',
+      ip_address: '192.168.1.105'
+    },
+    {
+      id: 'log7',
+      user_id: 'yousef-ceo',
+      user_name: 'Yousef Al-Rashid',
+      action: 'view_budget',
+      table_name: 'budgets',
+      record_id: 'budget-all',
+      details: { total_budget_viewed: 2400000 },
+      timestamp: '2024-11-30T16:45:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.100'
+    },
+    {
+      id: 'log8',
+      user_id: 'ahmed-teamlead',
+      user_name: 'Ahmed Al-Maktoum',
+      action: 'assign_task',
+      table_name: 'tasks',
+      record_id: 'task-890',
+      details: { task_title: 'Design Event Materials', assigned_to: 'Joel Mutia' },
+      timestamp: '2024-11-30T15:20:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.106'
+    }
+  ];
 
-    const taskMetrics = {
-      completed: tasks.filter(t => t.status === 'completed').length,
-      inProgress: tasks.filter(t => t.status === 'in_progress').length,
-      pending: tasks.filter(t => t.status === 'pending').length,
-      overdue: 8 // Mock value - would calculate based on due dates
-    };
+  const handleExport = () => {
+    if (!['ceo', 'admin'].includes(user?.role || '')) {
+      toast.error('You do not have permission to export audit logs');
+      return;
+    }
 
-    const budgetBreakdown = budgets.reduce((acc, budget) => {
-      const existing = acc.find(item => item.category === budget.category);
-      if (existing) {
-        existing.allocated += budget.allocated_amount;
-        existing.spent += budget.spent_amount;
-      } else {
-        acc.push({
-          category: budget.category,
-          allocated: budget.allocated_amount,
-          spent: budget.spent_amount
-        });
-      }
-      return acc;
-    }, [] as Array<{ category: string; allocated: number; spent: number }>);
-
-    const sponsorshipMetrics = sponsorships.reduce((acc, sponsor) => {
-      if (!acc[sponsor.package_type]) {
-        acc[sponsor.package_type] = { count: 0, revenue: 0 };
-      }
-      acc[sponsor.package_type].count++;
-      acc[sponsor.package_type].revenue += sponsor.amount || 0;
-      return acc;
-    }, {} as Record<string, { count: number; revenue: number }>);
-    return {
-      overview: {
-        totalEvents: { value: totalEvents, change: 12, trend: 'up' },
-        activeTasks: { value: activeTasks, change: -5, trend: 'down' },
-        totalBudget: { value: totalBudget, change: 8, trend: 'up' },
-        teamMembers: { value: teamMembers, change: 3, trend: 'up' }
+    // Log the export action
+    const exportLogEntry: AuditLog = {
+      id: `log-${Date.now()}`,
+      user_id: user?.id || '',
+      user_name: user?.full_name || '',
+      action: 'export_audit_logs',
+      table_name: 'audit_logs',
+      details: { 
+        log_count: selectedLogs.length || auditLogs.length,
+        export_format: 'csv',
+        filters: { action: actionFilter, severity: severityFilter, date_range: dateRange }
       },
-      eventMetrics,
-      taskMetrics,
-      budgetBreakdown,
-      sponsorshipMetrics,
-      monthlyTrends: [
-        { month: 'Jan', events: 2, budget: 45000, tasks: 23 },
-        { month: 'Feb', events: 3, budget: 67000, tasks: 34 },
-        { month: 'Mar', events: 4, budget: 89000, tasks: 45 },
-        { month: 'Apr', events: 3, budget: 78000, tasks: 38 },
-        { month: 'May', events: 5, budget: 125000, tasks: 56 },
-        { month: 'Jun', events: 6, budget: 156000, tasks: 67 }
-      ]
+      timestamp: new Date().toISOString(),
+      severity: 'medium',
+      ip_address: '192.168.1.100'
     };
+
+    console.log('Audit log export:', exportLogEntry);
+    toast.success(`Exported ${selectedLogs.length || auditLogs.length} audit log entries`);
   };
 
-  const analyticsData = calculateAnalytics();
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'critical': return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      case 'high': return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+      case 'medium': return <Eye className="h-4 w-4 text-yellow-500" />;
+      case 'low': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      default: return <Clock className="h-4 w-4 text-gray-500" />;
+    }
+  };
 
-  const canViewAnalytics = ['ceo', 'admin', 'it', 'marketing', 'team_lead'].includes(user?.role || '');
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
+      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
 
-  if (!canViewAnalytics) {
+  const filteredLogs = auditLogs.filter(log => {
+    const matchesSearch = log.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.table_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesAction = actionFilter === 'all' || log.action === actionFilter;
+    const matchesSeverity = severityFilter === 'all' || log.severity === severityFilter;
+    
+    // Date filtering
+    const logDate = new Date(log.timestamp);
+    const now = new Date();
+    const daysDiff = Math.floor((now.getTime() - logDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    let matchesDate = true;
+    switch (dateRange) {
+      case '1d': matchesDate = daysDiff <= 1; break;
+      case '7d': matchesDate = daysDiff <= 7; break;
+      case '30d': matchesDate = daysDiff <= 30; break;
+      case '90d': matchesDate = daysDiff <= 90; break;
+    }
+    
+    return matchesSearch && matchesAction && matchesSeverity && matchesDate;
+  });
+
+  const canViewAuditLogs = ['ceo', 'admin'].includes(user?.role || '');
+
+  if (!canViewAuditLogs) {
     return (
       <div className="p-6">
         <div className="text-center py-12">
-          <BarChart3 className="h-12 w-12 text-red-400 mx-auto mb-4" />
-          <p className="text-red-600 dark:text-red-400 font-semibold">Access Denied</p>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">
-            Analytics dashboard is restricted to authorized roles only.
+          <Shield className="h-12 w-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Access Restricted
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400">
+            Audit logs are restricted to CEO and Admin roles only.
           </p>
         </div>
       </div>
@@ -108,316 +226,234 @@ export function Analytics() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div className="p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-            <BarChart3 className="h-6 w-6 mr-2 text-purple-600" />
-            Analytics Dashboard
+            <Shield className="h-6 w-6 mr-2 text-red-600" />
+            Audit Logs
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Comprehensive insights and performance metrics
+            Complete audit trail of all system activities and data access
           </p>
         </div>
-        <div className="mt-4 sm:mt-0">
-          <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
-          >
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-            <option value="1y">Last year</option>
-          </select>
-        </div>
+        <button
+          onClick={handleExport}
+          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Export Logs
+        </button>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {Object.entries(analyticsData.overview).map(([key, data]) => {
-          const icons = {
-            totalEvents: Calendar,
-            activeTasks: CheckCircle,
-            totalBudget: DollarSign,
-            teamMembers: Users
-          };
-          const Icon = icons[key as keyof typeof icons];
-          const TrendIcon = data.trend === 'up' ? TrendingUp : TrendingDown;
-          
-          return (
-            <div key={key} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 capitalize">
-                    {key.replace(/([A-Z])/g, ' $1').trim()}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                    {key === 'totalBudget' ? `AED ${data.value.toLocaleString()}` : data.value}
-                  </p>
-                  <div className={`flex items-center mt-2 text-sm ${
-                    data.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    <TrendIcon className="h-4 w-4 mr-1" />
-                    {Math.abs(data.change)}% from last month
-                  </div>
-                </div>
-                <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                  <Icon className="h-6 w-6 text-purple-600" />
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Event Status Distribution */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Event Status</h3>
-          <div className="space-y-4">
-            {Object.entries(analyticsData.eventMetrics).map(([status, count]) => {
-              const colors = {
-                completed: 'bg-green-500',
-                active: 'bg-blue-500',
-                planning: 'bg-yellow-500',
-                cancelled: 'bg-red-500'
-              };
-              const total = Object.values(analyticsData.eventMetrics).reduce((a, b) => a + b, 0);
-              const percentage = total > 0 ? (count / total) * 100 : 0;
-              
-              return (
-                <div key={status} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-3 h-3 rounded-full ${colors[status as keyof typeof colors]}`}></div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
-                      {status}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full ${colors[status as keyof typeof colors]}`}
-                        style={{ width: `${percentage}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white w-8">
-                      {count}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Task Status Distribution */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Task Status</h3>
-          <div className="space-y-4">
-            {Object.entries(analyticsData.taskMetrics).map(([status, count]) => {
-              const colors = {
-                completed: 'bg-green-500',
-                inProgress: 'bg-blue-500',
-                pending: 'bg-yellow-500',
-                overdue: 'bg-red-500'
-              };
-              const total = Object.values(analyticsData.taskMetrics).reduce((a, b) => a + b, 0);
-              const percentage = total > 0 ? (count / total) * 100 : 0;
-              
-              return (
-                <div key={status} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-3 h-3 rounded-full ${colors[status as keyof typeof colors]}`}></div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {status === 'inProgress' ? 'In Progress' : status.charAt(0).toUpperCase() + status.slice(1)}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full ${colors[status as keyof typeof colors]}`}
-                        style={{ width: `${percentage}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white w-8">
-                      {count}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Budget Analysis */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Budget Analysis</h3>
-        <div className="space-y-4">
-          {analyticsData.budgetBreakdown.map((item) => {
-            const percentage = (item.spent / item.allocated) * 100;
-            const isOverBudget = item.spent > item.allocated;
-            
-            return (
-              <div key={item.category} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {item.category}
-                  </span>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    ${item.spent.toLocaleString()} / ${item.allocated.toLocaleString()}
-                  </div>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                  <div 
-                    className={`h-3 rounded-full ${
-                      isOverBudget ? 'bg-red-500' : percentage > 80 ? 'bg-yellow-500' : 'bg-green-500'
-                    }`}
-                    style={{ width: `${Math.min(percentage, 100)}%` }}
-                  ></div>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className={`font-medium ${
-                    isOverBudget ? 'text-red-600' : percentage > 80 ? 'text-yellow-600' : 'text-green-600'
-                  }`}>
-                    {percentage.toFixed(1)}% used
-                  </span>
-                  {isOverBudget && (
-                    <span className="text-red-600 flex items-center">
-                      <AlertCircle className="h-3 w-3 mr-1" />
-                      Over budget
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Sponsorship Revenue */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Sponsorship Revenue</h3>
+      {/* Filters */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Object.entries(analyticsData.sponsorshipMetrics).map(([tier, data]) => {
-            const colors = {
-              platinum: 'bg-purple-100 text-purple-800 border-purple-200',
-              gold: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-              silver: 'bg-gray-100 text-gray-800 border-gray-200',
-              bronze: 'bg-orange-100 text-orange-800 border-orange-200'
-            };
-            
-            return (
-              <div key={tier} className={`p-4 rounded-lg border ${colors[tier as keyof typeof colors]}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium capitalize">{tier}</span>
-                  <Target className="h-4 w-4" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-lg font-bold">{data.count}</p>
-                  <p className="text-xs">sponsors</p>
-                  <p className="text-sm font-semibold">AED {data.revenue.toLocaleString()}</p>
-                </div>
-              </div>
-            );
-          })}
+          <div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <input
+                type="text"
+                placeholder="Search logs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+          </div>
+          <div>
+            <select
+              value={actionFilter}
+              onChange={(e) => setActionFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="all">All Actions</option>
+              <option value="export_contacts">Export Contacts</option>
+              <option value="create_event">Create Event</option>
+              <option value="create_email_campaign">Create Campaign</option>
+              <option value="failed_login">Failed Login</option>
+              <option value="upload_file">Upload File</option>
+              <option value="send_email_campaign">Send Campaign</option>
+              <option value="view_budget">View Budget</option>
+              <option value="assign_task">Assign Task</option>
+            </select>
+          </div>
+          <div>
+            <select
+              value={severityFilter}
+              onChange={(e) => setSeverityFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="all">All Severities</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div>
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="1d">Last 24 hours</option>
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="90d">Last 90 days</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Monthly Trends */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Monthly Trends</h3>
+      {/* Audit Logs Table */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              System Activity Log ({filteredLogs.length} entries)
+            </h2>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {selectedLogs.length} selected
+              </span>
+              {selectedLogs.length > 0 && (
+                <button
+                  onClick={() => setSelectedLogs([])}
+                  className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                >
+                  Clear selection
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Month</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Events</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Budget</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Tasks</th>
+          <table className="w-full">
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th className="px-6 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={selectedLogs.length === filteredLogs.length && filteredLogs.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedLogs(filteredLogs.map(log => log.id));
+                      } else {
+                        setSelectedLogs([]);
+                      }
+                    }}
+                    className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                  />
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Timestamp
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  User
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Action
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Table
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Severity
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Details
+                </th>
               </tr>
             </thead>
-            <tbody>
-              {analyticsData.monthlyTrends.map((month) => (
-                <tr key={month.month} className="border-b border-gray-100 dark:border-gray-700">
-                  <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{month.month}</td>
-                  <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{month.events}</td>
-                  <td className="py-3 px-4 text-gray-600 dark:text-gray-400">AED {month.budget.toLocaleString()}</td>
-                  <td className="py-3 px-4 text-gray-600 dark:text-gray-400">{month.tasks}</td>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {filteredLogs.map((log) => (
+                <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={selectedLogs.includes(log.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedLogs([...selectedLogs, log.id]);
+                        } else {
+                          setSelectedLogs(selectedLogs.filter(id => id !== log.id));
+                        }
+                      }}
+                      className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 text-gray-400 mr-2" />
+                      <div>
+                        <div>{format(new Date(log.timestamp), 'MMM d, yyyy')}</div>
+                        <div className="text-xs text-gray-500">{format(new Date(log.timestamp), 'h:mm:ss a')}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <User className="h-4 w-4 text-gray-400 mr-2" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {log.user_name}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {log.ip_address}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                      {log.action.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    <div className="flex items-center">
+                      <Database className="h-4 w-4 text-gray-400 mr-2" />
+                      {log.table_name}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      {getSeverityIcon(log.severity)}
+                      <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getSeverityColor(log.severity)}`}>
+                        {log.severity}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {log.details && (
+                      <div className="max-w-xs">
+                        <details className="cursor-pointer">
+                          <summary className="text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                            View details
+                          </summary>
+                          <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded text-xs">
+                            <pre className="whitespace-pre-wrap">
+                              {JSON.stringify(log.details, null, 2)}
+                            </pre>
+                          </div>
+                        </details>
+                      </div>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
 
-      {/* Helper functions for custom date range */}
-      {(() => {
-        const handleCustomDateSubmit = () => {
-          if (customDateRange.startDate && customDateRange.endDate) {
-            setTimeRange(`${customDateRange.startDate}_${customDateRange.endDate}`);
-            setShowCustomRange(false);
-          }
-        };
-
-        return null;
-      })()}
-
-      {/* Custom Date Range Modal */}
-      {showCustomRange && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Select Custom Date Range
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  value={customDateRange.startDate}
-                  onChange={(e) => setCustomDateRange({ ...customDateRange, startDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  value={customDateRange.endDate}
-                  onChange={(e) => setCustomDateRange({ ...customDateRange, endDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={handleCustomDateSubmit}
-                  disabled={!customDateRange.startDate || !customDateRange.endDate}
-                  className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Apply Range
-                </button>
-                <button
-                  onClick={() => {
-                    setShowCustomRange(false);
-                    setTimeRange('30d');
-                  }}
-                  className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+        {filteredLogs.length === 0 && (
+          <div className="text-center py-12">
+            <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No audit logs found matching your criteria</p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

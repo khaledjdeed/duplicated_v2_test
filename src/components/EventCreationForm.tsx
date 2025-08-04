@@ -1,109 +1,222 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { 
-  Calendar, 
-  Plus, 
-  Clock, 
-  MapPin, 
-  FileText, 
+  Shield, 
+  Search, 
+  Filter, 
+  Download, 
+  Eye, 
+  Calendar,
+  User,
+  Database,
   AlertTriangle,
-  CheckCircle,
-  Award,
-  Users
-} from 'lucide-react';
-import { format } from 'date-fns';
-import toast from 'react-hot-toast';
+        <EmptyState
+          icon={Calendar}
+          title="Access Restricted"
+          description="Event creation is restricted to IT administrators only."
+        />
+interface AuditLog {
+  id: string;
+  user_id: string;
+  user_name: string;
+  action: string;
+  table_name: string;
+  record_id?: string;
+  details?: Record<string, any>;
+  timestamp: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  ip_address?: string;
+}
 
-export function EventCreationForm() {
-  const { user, createEvent } = useAuth();
-  const [eventsCreatedToday, setEventsCreatedToday] = useState(2); // Mock daily count
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    start_date: '',
-    end_date: '',
-    location: '',
-    status: 'planning' as const,
-    cme_credits: 0,
-    cme_accreditation: '',
-    expected_attendees: 0,
-    budget_estimate: 0
-  });
+export function AuditLogsView() {
+  const { user, users } = useAuth();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [actionFilter, setActionFilter] = useState('all');
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [dateRange, setDateRange] = useState('7d');
+  const [selectedLogs, setSelectedLogs] = useState<string[]>([]);
 
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  // Mock audit logs data
+  const auditLogs: AuditLog[] = [
+    {
+      id: 'log1',
+      user_id: 'yousef-ceo',
+      user_name: 'Yousef Al-Rashid',
+      action: 'export_contacts',
+      table_name: 'contacts',
+      record_id: 'all',
+      details: { contact_count: 1234, export_format: 'csv' },
+      timestamp: '2024-12-01T14:30:00Z',
+      severity: 'medium',
+      ip_address: '192.168.1.100'
+    },
+    {
+      id: 'log2',
+      user_id: 'mariam-admin',
+      user_name: 'Mariam Wael',
+      action: 'create_email_campaign',
+      table_name: 'email_campaigns',
+      record_id: 'campaign-123',
+      details: { campaign_name: 'Healthcare Summit 2024', recipient_count: 856 },
+      timestamp: '2024-12-01T13:15:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.101'
+    },
+    {
+      id: 'log3',
+      user_id: 'imran-it',
+      user_name: 'Imran Khan',
+      action: 'create_event',
+      table_name: 'events',
+      record_id: 'event-456',
+      details: { event_name: 'Cardiology Conference 2024', budget: 150000 },
+      timestamp: '2024-12-01T12:45:00Z',
+      severity: 'high',
+      ip_address: '192.168.1.102'
+    },
+    {
+      id: 'log4',
+      user_id: 'samir-ae',
+      user_name: 'Samir Hassan',
+      action: 'failed_login',
+      table_name: 'auth',
+      details: { reason: 'invalid_password', attempts: 3 },
+      timestamp: '2024-12-01T11:20:00Z',
+      severity: 'critical',
+      ip_address: '192.168.1.103'
+    },
+    {
+      id: 'log5',
+      user_id: 'joel-designer',
+      user_name: 'Joel Mutia',
+      action: 'upload_file',
+      table_name: 'uploads',
+      record_id: 'upload-789',
+      details: { file_name: 'conference-banner.png', file_size: 2048000 },
+      timestamp: '2024-12-01T10:30:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.104'
+    },
+    {
+      id: 'log6',
+      user_id: 'layla-marketing',
+      user_name: 'Layla Al-Zahra',
+      action: 'send_email_campaign',
+      table_name: 'email_campaigns',
+      record_id: 'campaign-124',
+      details: { emails_sent: 1247, success_rate: 96.2 },
+      timestamp: '2024-12-01T09:15:00Z',
+      severity: 'medium',
+      ip_address: '192.168.1.105'
+    },
+    {
+      id: 'log7',
+      user_id: 'yousef-ceo',
+      user_name: 'Yousef Al-Rashid',
+      action: 'view_budget',
+      table_name: 'budgets',
+      record_id: 'budget-all',
+      details: { total_budget_viewed: 2400000 },
+      timestamp: '2024-11-30T16:45:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.100'
+    },
+    {
+      id: 'log8',
+      user_id: 'ahmed-teamlead',
+      user_name: 'Ahmed Al-Maktoum',
+      action: 'assign_task',
+      table_name: 'tasks',
+      record_id: 'task-890',
+      details: { task_title: 'Design Event Materials', assigned_to: 'Joel Mutia' },
+      timestamp: '2024-11-30T15:20:00Z',
+      severity: 'low',
+      ip_address: '192.168.1.106'
+    }
+  ];
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (eventsCreatedToday >= 3) {
-      toast.error('Daily event creation limit reached (3/day)');
+  const handleExport = () => {
+    if (!['ceo', 'admin'].includes(user?.role || '')) {
+      toast.error('You do not have permission to export audit logs');
       return;
     }
 
-    setShowConfirmation(true);
+    // Log the export action
+    const exportLogEntry: AuditLog = {
+      id: `log-${Date.now()}`,
+      user_id: user?.id || '',
+      user_name: user?.full_name || '',
+      action: 'export_audit_logs',
+      table_name: 'audit_logs',
+      details: { 
+        log_count: selectedLogs.length || auditLogs.length,
+        export_format: 'csv',
+        filters: { action: actionFilter, severity: severityFilter, date_range: dateRange }
+      },
+      timestamp: new Date().toISOString(),
+      severity: 'medium',
+      ip_address: '192.168.1.100'
+    };
+
+    console.log('Audit log export:', exportLogEntry);
+    toast.success(`Exported ${selectedLogs.length || auditLogs.length} audit log entries`);
   };
 
-  const confirmCreateEvent = () => {
-    try {
-      const eventData = {
-        ...formData,
-        team_id: 'team1', // Default team
-        created_by: user?.id || '',
-        start_date: new Date(formData.start_date).toISOString(),
-        end_date: new Date(formData.end_date).toISOString()
-      };
-
-      createEvent(eventData);
-      setEventsCreatedToday(prev => prev + 1);
-      
-      // Log the event creation
-      const logEntry = {
-        user_id: user?.id,
-        action: 'create_event',
-        table_name: 'events',
-        details: { 
-          event_name: formData.name,
-          budget_estimate: formData.budget_estimate,
-          expected_attendees: formData.expected_attendees
-        },
-        timestamp: new Date().toISOString()
-      };
-
-      console.log('Event creation logged:', logEntry);
-      toast.success('Event created successfully');
-      
-      // Reset form
-      setFormData({
-        name: '',
-        description: '',
-        start_date: '',
-        end_date: '',
-        location: '',
-        status: 'planning',
-        cme_credits: 0,
-        cme_accreditation: '',
-        expected_attendees: 0,
-        budget_estimate: 0
-      });
-      setShowConfirmation(false);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to create event');
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'critical': return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      case 'high': return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+      case 'medium': return <Eye className="h-4 w-4 text-yellow-500" />;
+      case 'low': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      default: return <Clock className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  const canCreateEvents = user?.role === 'it';
-  const dailyLimitReached = eventsCreatedToday >= 3;
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return 'bg-red-100 text-red-800 border-red-200';
+      case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
 
-  if (!canCreateEvents) {
+  const filteredLogs = auditLogs.filter(log => {
+    const matchesSearch = log.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         log.table_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesAction = actionFilter === 'all' || log.action === actionFilter;
+    const matchesSeverity = severityFilter === 'all' || log.severity === severityFilter;
+    
+    // Date filtering
+    const logDate = new Date(log.timestamp);
+    const now = new Date();
+    const daysDiff = Math.floor((now.getTime() - logDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    let matchesDate = true;
+    switch (dateRange) {
+      case '1d': matchesDate = daysDiff <= 1; break;
+      case '7d': matchesDate = daysDiff <= 7; break;
+      case '30d': matchesDate = daysDiff <= 30; break;
+      case '90d': matchesDate = daysDiff <= 90; break;
+    }
+    
+    return matchesSearch && matchesAction && matchesSeverity && matchesDate;
+  });
+
+  const canViewAuditLogs = ['ceo', 'admin'].includes(user?.role || '');
+
+  if (!canViewAuditLogs) {
     return (
       <div className="p-6">
         <div className="text-center py-12">
-          <Calendar className="h-12 w-12 text-red-400 mx-auto mb-4" />
+          <Shield className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             Access Restricted
           </h2>
           <p className="text-gray-500 dark:text-gray-400">
-            Event creation is restricted to IT administrators only.
+            Audit logs are restricted to CEO and Admin roles only.
           </p>
         </div>
       </div>
@@ -111,299 +224,234 @@ export function EventCreationForm() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-            <Calendar className="h-6 w-6 mr-2 text-blue-600" />
-            Event Creation
+            <Shield className="h-6 w-6 mr-2 text-red-600" />
+            Audit Logs
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Create new events with comprehensive details and CME accreditation
+            Complete audit trail of all system activities and data access
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-            dailyLimitReached 
-              ? 'bg-red-100 text-red-800 border-red-200' 
-              : 'bg-green-100 text-green-800 border-green-200'
-          } border`}>
-            {dailyLimitReached ? <AlertTriangle className="h-4 w-4 mr-1" /> : <CheckCircle className="h-4 w-4 mr-1" />}
-            {eventsCreatedToday}/3 events created today
-          </span>
+        <button
+          onClick={handleExport}
+          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Export Logs
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <input
+                type="text"
+                placeholder="Search logs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+          </div>
+          <div>
+            <select
+              value={actionFilter}
+              onChange={(e) => setActionFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="all">All Actions</option>
+              <option value="export_contacts">Export Contacts</option>
+              <option value="create_event">Create Event</option>
+              <option value="create_email_campaign">Create Campaign</option>
+              <option value="failed_login">Failed Login</option>
+              <option value="upload_file">Upload File</option>
+              <option value="send_email_campaign">Send Campaign</option>
+              <option value="view_budget">View Budget</option>
+              <option value="assign_task">Assign Task</option>
+            </select>
+          </div>
+          <div>
+            <select
+              value={severityFilter}
+              onChange={(e) => setSeverityFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="all">All Severities</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+          <div>
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="1d">Last 24 hours</option>
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="90d">Last 90 days</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Daily Limit Warning */}
-      {dailyLimitReached && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
-          <div className="flex">
-            <AlertTriangle className="h-5 w-5 text-red-400 mr-2 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-red-800 dark:text-red-300">
-                Daily Event Creation Limit Reached
-              </p>
-              <p className="text-sm text-red-700 dark:text-red-400 mt-1">
-                You have reached the maximum of 3 events per day. Please try again tomorrow or contact system administrator for exceptions.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Audit Logs Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Basic Information */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="lg:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Event Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="e.g., UAE Healthcare Innovation Summit 2024"
-                />
-              </div>
-
-              <div className="lg:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Description
-                </label>
-                <textarea
-                  rows={4}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="Detailed description of the event, target audience, and objectives"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Start Date & Time *
-                </label>
-                <input
-                  type="datetime-local"
-                  required
-                  value={formData.start_date}
-                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  End Date & Time *
-                </label>
-                <input
-                  type="datetime-local"
-                  required
-                  value={formData.end_date}
-                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  placeholder="e.g., Dubai World Trade Centre"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Event Status
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                >
-                  <option value="planning">Planning</option>
-                  <option value="active">Active</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Healthcare-Specific Fields */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                <Award className="h-5 w-5 mr-2 text-purple-600" />
-                Healthcare Accreditation
-              </h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    CME Credits
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="50"
-                    value={formData.cme_credits}
-                    onChange={(e) => setFormData({ ...formData, cme_credits: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Number of CME credits offered"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Accreditation Bodies
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.cme_accreditation}
-                    onChange={(e) => setFormData({ ...formData, cme_accreditation: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="e.g., DHA, MOH, HAAD, SCFHS"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Planning Details */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                <Users className="h-5 w-5 mr-2 text-green-600" />
-                Planning Details
-              </h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Expected Attendees
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.expected_attendees}
-                    onChange={(e) => setFormData({ ...formData, expected_attendees: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Estimated number of attendees"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Budget Estimate (AED)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1000"
-                    value={formData.budget_estimate}
-                    onChange={(e) => setFormData({ ...formData, budget_estimate: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    placeholder="Initial budget estimate"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Form Actions */}
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-              <div className="flex space-x-4">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              System Activity Log ({filteredLogs.length} entries)
+            </h2>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {selectedLogs.length} selected
+              </span>
+              {selectedLogs.length > 0 && (
                 <button
-                  type="submit"
-                  disabled={dailyLimitReached}
-                  className="flex-1 inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setSelectedLogs([])}
+                  className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
                 >
-                  <Plus className="h-5 w-5 mr-2" />
-                  Create Event
+                  Clear selection
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({
-                    name: '',
-                    description: '',
-                    start_date: '',
-                    end_date: '',
-                    location: '',
-                    status: 'planning',
-                    cme_credits: 0,
-                    cme_accreditation: '',
-                    expected_attendees: 0,
-                    budget_estimate: 0
-                  })}
-                  className="px-6 py-3 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
-                >
-                  Clear Form
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {/* Confirmation Modal */}
-      {showConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
-            <div className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Confirm Event Creation
-              </h2>
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Event Name:</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">{formData.name}</span>
-                </div>
-                {formData.start_date && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Start Date:</span>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      {format(new Date(formData.start_date), 'MMM d, yyyy h:mm a')}
-                    </span>
-                  </div>
-                )}
-                {formData.cme_credits > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">CME Credits:</span>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">{formData.cme_credits}</span>
-                  </div>
-                )}
-                {formData.budget_estimate > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Budget Estimate:</span>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      AED {formData.budget_estimate.toLocaleString()}
-                    </span>
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex space-x-3">
-                <button
-                  onClick={confirmCreateEvent}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  Confirm Creation
-                </button>
-                <button
-                  onClick={() => setShowConfirmation(false)}
-                  className="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
+              )}
             </div>
           </div>
         </div>
-      )}
+        
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th className="px-6 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={selectedLogs.length === filteredLogs.length && filteredLogs.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedLogs(filteredLogs.map(log => log.id));
+                      } else {
+                        setSelectedLogs([]);
+                      }
+                    }}
+                    className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                  />
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Timestamp
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  User
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Action
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Table
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Severity
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Details
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {filteredLogs.map((log) => (
+                <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <input
+                      type="checkbox"
+                      checked={selectedLogs.includes(log.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedLogs([...selectedLogs, log.id]);
+                        } else {
+                          setSelectedLogs(selectedLogs.filter(id => id !== log.id));
+                        }
+                      }}
+                      className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                    />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 text-gray-400 mr-2" />
+                      <div>
+                        <div>{format(new Date(log.timestamp), 'MMM d, yyyy')}</div>
+                        <div className="text-xs text-gray-500">{format(new Date(log.timestamp), 'h:mm:ss a')}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <User className="h-4 w-4 text-gray-400 mr-2" />
+                      <div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {log.user_name}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {log.ip_address}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                      {log.action.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    <div className="flex items-center">
+                      <Database className="h-4 w-4 text-gray-400 mr-2" />
+                      {log.table_name}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      {getSeverityIcon(log.severity)}
+                      <span className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getSeverityColor(log.severity)}`}>
+                        {log.severity}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    {log.details && (
+                      <div className="max-w-xs">
+                        <details className="cursor-pointer">
+                          <summary className="text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                            View details
+                          </summary>
+                          <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded text-xs">
+                            <pre className="whitespace-pre-wrap">
+                              {JSON.stringify(log.details, null, 2)}
+                            </pre>
+                          </div>
+                        </details>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {filteredLogs.length === 0 && (
+          <div className="text-center py-12">
+            <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No audit logs found matching your criteria</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
