@@ -43,39 +43,39 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
     switch (user.role) {
       case 'ceo':
         roleSpecificItems.push(
-          { id: 'events', label: 'All Events', icon: Calendar },
+          { id: 'events', label: 'Events Calendar', icon: Calendar },
           { id: 'teams', label: 'Team Management', icon: Building2 },
-          { id: 'budgets', label: 'Budget Overview', icon: DollarSign },
+          { id: 'budgets', label: 'Financial Overview', icon: DollarSign },
           { id: 'contacts', label: 'Contact Directory', icon: Users },
-          { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+          { id: 'analytics', label: 'Analytics Dashboard', icon: BarChart3 },
           { id: 'ai-assistant', label: 'AI Assistant', icon: Brain },
           { id: 'audit-logs', label: 'Audit Logs', icon: Shield },
-          { id: 'settings', label: 'Settings', icon: Settings }
+          { id: 'settings', label: 'System Settings', icon: Settings }
         );
         break;
 
       case 'admin':
         roleSpecificItems.push(
-          { id: 'events', label: 'Events', icon: Calendar },
+          { id: 'events', label: 'Events Calendar', icon: Calendar },
           { id: 'contacts', label: 'Contact Directory', icon: Users },
           { id: 'teams', label: 'Team Management', icon: Building2 },
-          { id: 'budgets', label: 'Budgets', icon: DollarSign },
-          { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+          { id: 'budgets', label: 'Budget Overview', icon: DollarSign },
+          { id: 'analytics', label: 'Analytics Dashboard', icon: BarChart3 },
           { id: 'audit-logs', label: 'Audit Logs', icon: Shield },
-          { id: 'user-management', label: 'User Management', icon: UserCog }
+          { id: 'teams', label: 'User Management', icon: UserCog }
         );
         break;
 
       case 'marketing':
         roleSpecificItems.push(
           { id: 'contacts', label: 'Contacts (Limited)', icon: Users },
-          { id: 'analytics', label: 'Campaign Analytics', icon: BarChart3 }
+          { id: 'analytics', label: 'Marketing Analytics', icon: BarChart3 }
         );
         break;
 
       case 'ae':
         roleSpecificItems.push(
-          { id: 'my-events', label: 'My Events', icon: Calendar },
+          { id: 'events', label: 'My Events', icon: Calendar },
           { id: 'tasks', label: 'My Tasks', icon: ClipboardList },
           { id: 'event-requests', label: 'Request Event', icon: Bell },
           { id: 'budgets', label: 'Event Budgets', icon: DollarSign }
@@ -99,12 +99,12 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
 
       case 'it':
         roleSpecificItems.push(
-          { id: 'event-creation', label: 'Create Events', icon: Calendar },
+          { id: 'events', label: 'Events Calendar', icon: Calendar },
           { id: 'event-requests', label: 'Event Requests', icon: Bell },
-          { id: 'budgets', label: 'Budget Overview', icon: DollarSign },
-          { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+          { id: 'budgets', label: 'Financial Overview', icon: DollarSign },
+          { id: 'analytics', label: 'Analytics Dashboard', icon: BarChart3 },
           { id: 'audit-logs', label: 'Audit Logs', icon: Shield },
-          { id: 'system-settings', label: 'System Settings', icon: Settings }
+          { id: 'settings', label: 'System Settings', icon: Settings }
         );
         break;
 
@@ -112,7 +112,7 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
         roleSpecificItems.push(
           { id: 'team-tasks', label: 'Team Tasks', icon: ClipboardList },
           { id: 'teams', label: 'Team Overview', icon: Building2 },
-          { id: 'team-analytics', label: 'Team Analytics', icon: BarChart3 }
+          { id: 'analytics', label: 'Team Analytics', icon: BarChart3 }
         );
         break;
 

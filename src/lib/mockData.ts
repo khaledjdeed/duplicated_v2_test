@@ -1,13 +1,3 @@
-// Mock data for demo purposes
-export interface MockUser {
-  id: string;
-  username: string;
-  full_name: string;
-  role: 'it' | 'event_coordinator' | 'designer' | 'sales' | 'logistics' | 'admin';
-  team_id: string;
-  avatar_url?: string;
-}
-
 export interface MockEvent {
   id: string;
   name: string;
@@ -64,66 +54,6 @@ export interface MockNotification {
   read: boolean;
   created_at: string;
 }
-
-// Mock users
-export const mockUsers: MockUser[] = [
-  {
-    id: '1',
-    username: 'admin',
-    full_name: 'Ghassan Al-Rashid',
-    role: 'it',
-    team_id: 'team1',
-    avatar_url: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
-  },
-  {
-    id: '2',
-    username: 'coordinator',
-    full_name: 'Christa Al-Mansouri',
-    role: 'event_coordinator',
-    team_id: 'team1',
-    avatar_url: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
-  },
-  {
-    id: '3',
-    username: 'designer1',
-    full_name: 'Amira Hassan',
-    role: 'designer',
-    team_id: 'team1',
-    avatar_url: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
-  },
-  {
-    id: '4',
-    username: 'designer2',
-    full_name: 'Layla Al-Zahra',
-    role: 'designer',
-    team_id: 'team1',
-    avatar_url: 'https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
-  },
-  {
-    id: '5',
-    username: 'sales',
-    full_name: 'Salim Al-Maktoum',
-    role: 'sales',
-    team_id: 'team1',
-    avatar_url: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
-  },
-  {
-    id: '6',
-    username: 'logistics',
-    full_name: 'Fatima Al-Qasimi',
-    role: 'logistics',
-    team_id: 'team1',
-    avatar_url: 'https://images.pexels.com/photos/1181424/pexels-photo-1181424.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
-  },
-  {
-    id: '7',
-    username: 'ceo',
-    full_name: 'Dr. Mohammad Al-Nahyan',
-    role: 'admin',
-    team_id: 'team1',
-    avatar_url: 'https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=100&h=100&fit=crop'
-  }
-];
 
 // Mock events
 export const mockEvents: MockEvent[] = [
@@ -529,11 +459,6 @@ export const mockNotifications: MockNotification[] = [
     created_at: '2024-05-01T15:30:00Z'
   }
 ];
-
-// Helper functions
-export const getUserById = (id: string): MockUser | undefined => {
-  return mockUsers.find(user => user.id === id);
-};
 
 export const getEventById = (id: string): MockEvent | undefined => {
   return mockEvents.find(event => event.id === id);

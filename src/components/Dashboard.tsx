@@ -35,10 +35,10 @@ export function Dashboard({ onTabChange }: DashboardProps) {
             { label: 'Team Members', value: '47', icon: Users, color: 'text-orange-600', bgColor: 'bg-orange-50' }
           ],
           quickActions: [
-            { label: 'View All Events', action: () => onTabChange('events'), icon: Calendar },
+            { label: 'Events Calendar', action: () => onTabChange('events'), icon: Calendar },
             { label: 'Team Management', action: () => onTabChange('teams'), icon: Building2 },
             { label: 'AI Insights', action: () => onTabChange('ai-assistant'), icon: Brain },
-            { label: 'Analytics', action: () => onTabChange('analytics'), icon: BarChart3 }
+            { label: 'Analytics Dashboard', action: () => onTabChange('analytics'), icon: BarChart3 }
           ]
         };
 
@@ -56,7 +56,7 @@ export function Dashboard({ onTabChange }: DashboardProps) {
             { label: 'Contact Directory', action: () => onTabChange('contacts'), icon: Users },
             { label: 'Team Management', action: () => onTabChange('teams'), icon: Building2 },
             { label: 'Audit Logs', action: () => onTabChange('audit-logs'), icon: Shield },
-            { label: 'Analytics', action: () => onTabChange('analytics'), icon: BarChart3 }
+            { label: 'Analytics Dashboard', action: () => onTabChange('analytics'), icon: BarChart3 }
           ]
         };
 
@@ -71,8 +71,8 @@ export function Dashboard({ onTabChange }: DashboardProps) {
             { label: 'Contacts', value: '1,234', icon: Users, color: 'text-orange-600', bgColor: 'bg-orange-50' }
           ],
           quickActions: [
-            { label: 'View Events', action: () => onTabChange('events'), icon: Calendar },
-            { label: 'View Analytics', action: () => onTabChange('analytics'), icon: BarChart3 },
+            { label: 'Events Calendar', action: () => onTabChange('events'), icon: Calendar },
+            { label: 'Marketing Analytics', action: () => onTabChange('analytics'), icon: BarChart3 },
             { label: 'Contact List', action: () => onTabChange('contacts'), icon: Users }
           ]
         };
@@ -88,7 +88,7 @@ export function Dashboard({ onTabChange }: DashboardProps) {
             { label: 'Completion Rate', value: '87%', icon: TrendingUp, color: 'text-orange-600', bgColor: 'bg-orange-50' }
           ],
           quickActions: [
-            { label: 'My Events', action: () => onTabChange('my-events'), icon: Calendar },
+            { label: 'My Events', action: () => onTabChange('events'), icon: Calendar },
             { label: 'My Tasks', action: () => onTabChange('tasks'), icon: ClipboardList },
             { label: 'Request Event', action: () => onTabChange('event-requests'), icon: Calendar },
             { label: 'View Budgets', action: () => onTabChange('budgets'), icon: DollarSign }
@@ -123,10 +123,10 @@ export function Dashboard({ onTabChange }: DashboardProps) {
             { label: 'Active Users', value: '42', icon: Users, color: 'text-purple-600', bgColor: 'bg-purple-50' }
           ],
           quickActions: [
-            { label: 'Create Event', action: () => onTabChange('event-creation'), icon: Calendar },
+            { label: 'Events Calendar', action: () => onTabChange('events'), icon: Calendar },
             { label: 'Event Requests', action: () => onTabChange('event-requests'), icon: ClipboardList },
-            { label: 'System Settings', action: () => onTabChange('system-settings'), icon: Settings },
-            { label: 'Analytics', action: () => onTabChange('analytics'), icon: BarChart3 }
+            { label: 'System Settings', action: () => onTabChange('settings'), icon: Settings },
+            { label: 'Analytics Dashboard', action: () => onTabChange('analytics'), icon: BarChart3 }
           ]
         };
 
@@ -143,7 +143,7 @@ export function Dashboard({ onTabChange }: DashboardProps) {
           quickActions: [
             { label: 'Team Tasks', action: () => onTabChange('team-tasks'), icon: ClipboardList },
             { label: 'Team Overview', action: () => onTabChange('teams'), icon: Building2 },
-            { label: 'Team Analytics', action: () => onTabChange('team-analytics'), icon: BarChart3 }
+            { label: 'Team Analytics', action: () => onTabChange('analytics'), icon: BarChart3 }
           ]
         };
 

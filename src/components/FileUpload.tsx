@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useDemoAuth } from '../hooks/useDemoAuth';
-import { getTasksByUserId, getUserById } from '../lib/mockData';
+import { getTasksByUserId } from '../lib/mockData';
+import { getUserById } from '../lib/mockUsers';
 import { useDropzone } from 'react-dropzone';
 import { Upload, File, X, Check, Image, FileText, Archive } from 'lucide-react';
 import toast from 'react-hot-toast';

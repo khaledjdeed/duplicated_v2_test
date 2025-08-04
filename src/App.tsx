@@ -1,19 +1,97 @@
 import React, { useState } from 'react';
+import { AuthProvider } from './hooks/useAuth';
+import { NavigationProvider } from './hooks/useNavigation';
+import { Layout } from './components/Layout';
+import { Dashboard } from './components/Dashboard';
+import { EventsCalendar } from './components/EventsCalendar';
+import { TeamManagement } from './components/TeamManagement';
+import { BudgetOverview } from './components/BudgetOverview';
+import { AnalyticsDashboard } from './components/AnalyticsDashboard';
+import { AuditLogs } from './components/AuditLogs';
+import { SystemSettings } from './components/SystemSettings';
+import { AIAssistant } from './components/AIAssistant';
+import { ContactDirectory } from './components/ContactDirectory';
+import { Auth } from './components/Auth';
 import { useAuth } from './hooks/useAuth';
-import { 
-  Shield, 
-  Search, 
-  Filter, 
-  Download, 
-  Eye, 
-  Calendar,
-  User,
-  Database,
-  AlertTriangle,
-  CheckCircle,
-  Clock
-} from 'lucide-react';
-import { format } from 'date-fns';
+import { Toaster } from 'react-hot-toast';
+
+function AppContent() {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('dashboard');
+
+  if (!user) {
+    return <Auth />;
+  }
+
+  const renderActiveTab = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard onTabChange={setActiveTab} />;
+      case 'events':
+      case 'calendar':
+        return <EventsCalendar />;
+      case 'teams':
+      case 'team-management':
+        return <TeamManagement />;
+      case 'budgets':
+      case 'budget-overview':
+        return <BudgetOverview />;
+      case 'analytics':
+        return <AnalyticsDashboard />;
+      case 'audit-logs':
+        return <AuditLogs />;
+      case 'system-settings':
+      case 'settings':
+        return <SystemSettings />;
+      case 'ai-assistant':
+        return <AIAssistant />;
+      case 'contacts':
+        return <ContactDirectory />;
+      default:
+        return <Dashboard onTabChange={setActiveTab} />;
+    }
+  };
+
+  return (
+    <NavigationProvider>
+      <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+        {renderActiveTab()}
+      </Layout>
+    </NavigationProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+      <Toaster position="top-right" />
+    </AuthProvider>
+  );
+}
+
+// Remove the inline AuditLogsView component - now using AuditLogs from components
+
+/*
+// Old inline component removed - replaced with proper AuditLogs component
+interface AuditLog {
+  id: string;
+  user_id: string;
+  user_name: string;
+  action: string;
+  table_name: string;
+  record_id?: string;
+  details?: Record<string, any>;
+  timestamp: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  ip_address?: string;
+}
+
+export function AuditLogsView() {
+  // This component has been moved to src/components/AuditLogs.tsx
+  // with enhanced functionality and proper role-based access control
+}
+*/
 import toast from 'react-hot-toast';
 
 interface AuditLog {

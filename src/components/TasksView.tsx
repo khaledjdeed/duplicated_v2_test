@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useDemoAuth } from '../hooks/useDemoAuth';
-import { mockTasks, mockEvents, mockUsers, MockTask } from '../lib/mockData';
+import { mockTasks, mockEvents, MockTask } from '../lib/mockData';
+import { mockUsers } from '../lib/mockUsers';
 import { ClipboardList, Plus, Edit, Trash2, User, Calendar, AlertCircle, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';

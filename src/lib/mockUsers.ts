@@ -1,6 +1,5 @@
 import { User } from './types';
 
-// Temporary user simulation for CEO demo
 export const mockUsers: User[] = [
   {
     id: 'yousef-ceo',
@@ -96,6 +95,10 @@ export const mockUsers: User[] = [
     updated_at: '2024-01-01T00:00:00Z'
   }
 ];
+
+export const getUserById = (id: string): User | undefined => {
+  return mockUsers.find(user => user.id === id);
+};
 
 export const getCurrentUser = (): User => {
   // For demo purposes, return CEO user

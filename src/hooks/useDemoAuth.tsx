@@ -1,16 +1,17 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { mockUsers, MockUser } from '../lib/mockData';
+import { mockUsers } from '../lib/mockUsers';
+import { User } from '../lib/types';
 
 interface DemoAuthContextType {
-  currentUser: MockUser | null;
+  currentUser: User | null;
   switchRole: (userId: string) => void;
-  availableUsers: MockUser[];
+  availableUsers: User[];
 }
 
 const DemoAuthContext = createContext<DemoAuthContextType | undefined>(undefined);
 
 export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<MockUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     // Default to IT user
