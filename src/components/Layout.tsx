@@ -6,7 +6,6 @@ import {
   Users,
   ClipboardList,
   DollarSign,
-  Mail,
   Settings,
   Bell,
   LogOut,
@@ -45,10 +44,9 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
       case 'ceo':
         roleSpecificItems.push(
           { id: 'events', label: 'All Events', icon: Calendar },
-          { id: 'pods', label: 'Pod Management', icon: Building2 },
+          { id: 'teams', label: 'Team Management', icon: Building2 },
           { id: 'budgets', label: 'Budget Overview', icon: DollarSign },
           { id: 'contacts', label: 'Contact Directory', icon: Users },
-          { id: 'email-campaigns', label: 'Email Campaigns', icon: Mail },
           { id: 'analytics', label: 'Analytics', icon: BarChart3 },
           { id: 'ai-assistant', label: 'AI Assistant', icon: Brain },
           { id: 'audit-logs', label: 'Audit Logs', icon: Shield },
@@ -60,8 +58,9 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
         roleSpecificItems.push(
           { id: 'events', label: 'Events', icon: Calendar },
           { id: 'contacts', label: 'Contact Directory', icon: Users },
-          { id: 'email-campaigns', label: 'Email Campaigns', icon: Mail },
+          { id: 'teams', label: 'Team Management', icon: Building2 },
           { id: 'budgets', label: 'Budgets', icon: DollarSign },
+          { id: 'analytics', label: 'Analytics', icon: BarChart3 },
           { id: 'audit-logs', label: 'Audit Logs', icon: Shield },
           { id: 'user-management', label: 'User Management', icon: UserCog }
         );
@@ -69,7 +68,6 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
 
       case 'marketing':
         roleSpecificItems.push(
-          { id: 'email-campaigns', label: 'Email Campaigns', icon: Mail },
           { id: 'contacts', label: 'Contacts (Limited)', icon: Users },
           { id: 'analytics', label: 'Campaign Analytics', icon: BarChart3 }
         );
@@ -88,14 +86,14 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
         roleSpecificItems.push(
           { id: 'tasks', label: 'My Tasks', icon: ClipboardList },
           { id: 'uploads', label: 'File Uploads', icon: Upload },
-          { id: 'pod-overview', label: 'Pod Overview', icon: Building2 }
+          { id: 'teams', label: 'Team Overview', icon: Building2 }
         );
         break;
 
       case 'logistics':
         roleSpecificItems.push(
           { id: 'tasks', label: 'My Tasks', icon: ClipboardList },
-          { id: 'pod-overview', label: 'Pod Overview', icon: Building2 }
+          { id: 'teams', label: 'Team Overview', icon: Building2 }
         );
         break;
 
@@ -104,6 +102,8 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
           { id: 'event-creation', label: 'Create Events', icon: Calendar },
           { id: 'event-requests', label: 'Event Requests', icon: Bell },
           { id: 'budgets', label: 'Budget Overview', icon: DollarSign },
+          { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+          { id: 'audit-logs', label: 'Audit Logs', icon: Shield },
           { id: 'system-settings', label: 'System Settings', icon: Settings }
         );
         break;
@@ -111,7 +111,7 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
       case 'team_lead':
         roleSpecificItems.push(
           { id: 'team-tasks', label: 'Team Tasks', icon: ClipboardList },
-          { id: 'pod-overview', label: 'Pod Overview', icon: Building2 },
+          { id: 'teams', label: 'Team Overview', icon: Building2 },
           { id: 'team-analytics', label: 'Team Analytics', icon: BarChart3 }
         );
         break;

@@ -36,7 +36,7 @@ export function Dashboard({ onTabChange }: DashboardProps) {
           ],
           quickActions: [
             { label: 'View All Events', action: () => onTabChange('events'), icon: Calendar },
-            { label: 'Pod Management', action: () => onTabChange('pods'), icon: Building2 },
+            { label: 'Team Management', action: () => onTabChange('teams'), icon: Building2 },
             { label: 'AI Insights', action: () => onTabChange('ai-assistant'), icon: Brain },
             { label: 'Analytics', action: () => onTabChange('analytics'), icon: BarChart3 }
           ]
@@ -49,14 +49,14 @@ export function Dashboard({ onTabChange }: DashboardProps) {
           stats: [
             { label: 'Active Events', value: '23', icon: Calendar, color: 'text-blue-600', bgColor: 'bg-blue-50' },
             { label: 'Pending Requests', value: '5', icon: ClipboardList, color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
-            { label: 'Email Campaigns', value: '12', icon: Mail, color: 'text-green-600', bgColor: 'bg-green-50' },
+            { label: 'Team Members', value: '47', icon: Users, color: 'text-green-600', bgColor: 'bg-green-50' },
             { label: 'Audit Logs', value: '156', icon: Shield, color: 'text-red-600', bgColor: 'bg-red-50' }
           ],
           quickActions: [
             { label: 'Contact Directory', action: () => onTabChange('contacts'), icon: Users },
-            { label: 'Email Campaigns', action: () => onTabChange('email-campaigns'), icon: Mail },
+            { label: 'Team Management', action: () => onTabChange('teams'), icon: Building2 },
             { label: 'Audit Logs', action: () => onTabChange('audit-logs'), icon: Shield },
-            { label: 'User Management', action: () => onTabChange('user-management'), icon: Users }
+            { label: 'Analytics', action: () => onTabChange('analytics'), icon: BarChart3 }
           ]
         };
 
@@ -65,13 +65,13 @@ export function Dashboard({ onTabChange }: DashboardProps) {
           title: 'Marketing Dashboard',
           subtitle: 'Campaign management and analytics',
           stats: [
-            { label: 'Active Campaigns', value: '8', icon: Mail, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-            { label: 'Emails Sent', value: '2,847', icon: TrendingUp, color: 'text-green-600', bgColor: 'bg-green-50' },
-            { label: 'Open Rate', value: '24.3%', icon: BarChart3, color: 'text-purple-600', bgColor: 'bg-purple-50' },
+            { label: 'Active Events', value: '8', icon: Calendar, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+            { label: 'Event Attendance', value: '2,847', icon: TrendingUp, color: 'text-green-600', bgColor: 'bg-green-50' },
+            { label: 'Engagement Rate', value: '24.3%', icon: BarChart3, color: 'text-purple-600', bgColor: 'bg-purple-50' },
             { label: 'Contacts', value: '1,234', icon: Users, color: 'text-orange-600', bgColor: 'bg-orange-50' }
           ],
           quickActions: [
-            { label: 'Create Campaign', action: () => onTabChange('email-campaigns'), icon: Mail },
+            { label: 'View Events', action: () => onTabChange('events'), icon: Calendar },
             { label: 'View Analytics', action: () => onTabChange('analytics'), icon: BarChart3 },
             { label: 'Contact List', action: () => onTabChange('contacts'), icon: Users }
           ]
@@ -108,7 +108,7 @@ export function Dashboard({ onTabChange }: DashboardProps) {
           quickActions: [
             { label: 'My Tasks', action: () => onTabChange('tasks'), icon: ClipboardList },
             { label: 'Upload Files', action: () => onTabChange('uploads'), icon: TrendingUp },
-            { label: 'Pod Overview', action: () => onTabChange('pod-overview'), icon: Building2 }
+            { label: 'Team Overview', action: () => onTabChange('teams'), icon: Building2 }
           ]
         };
 
@@ -125,7 +125,8 @@ export function Dashboard({ onTabChange }: DashboardProps) {
           quickActions: [
             { label: 'Create Event', action: () => onTabChange('event-creation'), icon: Calendar },
             { label: 'Event Requests', action: () => onTabChange('event-requests'), icon: ClipboardList },
-            { label: 'System Settings', action: () => onTabChange('system-settings'), icon: TrendingUp }
+            { label: 'System Settings', action: () => onTabChange('system-settings'), icon: Settings },
+            { label: 'Analytics', action: () => onTabChange('analytics'), icon: BarChart3 }
           ]
         };
 
@@ -141,7 +142,7 @@ export function Dashboard({ onTabChange }: DashboardProps) {
           ],
           quickActions: [
             { label: 'Team Tasks', action: () => onTabChange('team-tasks'), icon: ClipboardList },
-            { label: 'Pod Overview', action: () => onTabChange('pod-overview'), icon: Building2 },
+            { label: 'Team Overview', action: () => onTabChange('teams'), icon: Building2 },
             { label: 'Team Analytics', action: () => onTabChange('team-analytics'), icon: BarChart3 }
           ]
         };
