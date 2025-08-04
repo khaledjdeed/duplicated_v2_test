@@ -14,7 +14,7 @@ import {
   Clock
 } from 'lucide-react';
 import { format } from 'date-fns';
-import toast from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 
 interface AuditLog {
   id: string;
