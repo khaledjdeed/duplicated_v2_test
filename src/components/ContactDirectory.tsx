@@ -141,7 +141,7 @@ export function ContactDirectory() {
               onClick={() => setShowEncrypted(!showEncrypted)}
               className={`inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 showEncrypted 
-                  ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                  ? 'bg-accent-100 text-accent-800 hover:bg-accent-200 border border-accent-300' 
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >

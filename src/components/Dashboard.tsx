@@ -230,9 +230,13 @@ export function Dashboard({ onTabChange }: DashboardProps) {
                   <button
                     key={index}
                     onClick={action.action}
-                    className="p-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg text-left transition-colors"
+                    className={`p-4 rounded-lg text-left transition-colors ${
+                      index === 0 
+                        ? 'bg-accent-50 hover:bg-accent-100 dark:bg-accent-900/20 dark:hover:bg-accent-800/30 border border-accent-200 dark:border-accent-700' 
+                        : 'bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600'
+                    }`}
                   >
-                    <Icon className="h-6 w-6 text-blue-600 mb-2" />
+                    <Icon className={`h-6 w-6 mb-2 ${index === 0 ? 'text-accent-600' : 'text-blue-600'}`} />
                     <p className="font-medium text-gray-900 dark:text-white text-sm">
                       {action.label}
                     </p>

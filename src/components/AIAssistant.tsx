@@ -161,7 +161,7 @@ export function AIAssistant() {
               <button
                 key={index}
                 onClick={() => setInputMessage(prompt)}
-                className="text-left p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                className="text-left p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-accent-50 dark:hover:bg-accent-900/20 hover:border-accent-200 dark:hover:border-accent-700 border border-transparent transition-all duration-200"
               >
                 <p className="text-sm text-gray-700 dark:text-gray-300">{prompt}</p>
               </button>

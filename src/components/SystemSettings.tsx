@@ -396,7 +396,7 @@ export function SystemSettings() {
                   <button
                     onClick={() => handleSettingChange('security', 'require_2fa', !settings.security.require_2fa)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      settings.security.require_2fa ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
+                      settings.security.require_2fa ? 'bg-accent-600' : 'bg-gray-200 dark:bg-gray-600'
                     }`}
                   >
                     <span
@@ -419,7 +419,7 @@ export function SystemSettings() {
                   <button
                     onClick={() => handleSettingChange('security', 'ip_whitelist_enabled', !settings.security.ip_whitelist_enabled)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      settings.security.ip_whitelist_enabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-600'
+                      settings.security.ip_whitelist_enabled ? 'bg-accent-600' : 'bg-gray-200 dark:bg-gray-600'
                     }`}
                   >
                     <span

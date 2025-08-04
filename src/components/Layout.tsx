@@ -148,7 +148,7 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
           <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             MCO
           </h1>
-          <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full font-medium">
+          <span className="text-xs bg-accent-100 text-accent-800 px-2 py-1 rounded-full font-medium">
             DEMO
           </span>
         </div>
@@ -320,7 +320,7 @@ export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
               <h1 className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 MCO
               </h1>
-              <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full font-medium">
+              <span className="text-xs bg-accent-100 text-accent-800 px-2 py-1 rounded-full font-medium">
                 DEMO
               </span>
             </div>

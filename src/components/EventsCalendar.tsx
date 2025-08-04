@@ -284,7 +284,7 @@ export function EventsCalendar() {
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setCurrentDate(new Date())}
-            className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            className="px-3 py-1 text-sm bg-accent-100 dark:bg-accent-900/30 text-accent-800 dark:text-accent-300 rounded-md hover:bg-accent-200 dark:hover:bg-accent-800/50 transition-colors font-medium"
           >
             Today
           </button>
