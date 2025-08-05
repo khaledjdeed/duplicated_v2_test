@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { mockSponsorships, getSponsorshipsByAssignedTo } from '../lib/mockData';
+import { mockSponsorships, getSponsorshipsByAssignedTo, mockEvents } from '../lib/mockData';
 import { BackButton } from './BackButton';
 import { Sponsorship } from '../lib/types';
 import { Plus, Edit, Trash2, DollarSign, Mail, Phone } from 'lucide-react';
@@ -112,7 +112,7 @@ export function SponsorshipKanban() {
     } else {
       const newSponsorship: Sponsorship = {
         id: `sponsor-${Date.now()}`,
-        ...formData
+        ...formData,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
@@ -226,34 +226,15 @@ export function SponsorshipKanban() {
               <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium text-gray-900 dark:text-white">
-                    Event
+                    {stageConfig[stage].title}
                   </h3>
-                  <select
-                    value={formData.event_id}
-                    onChange={(e) => setFormData({ ...formData, event_id: e.target.value })}
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${stageConfig[stage].color}`}>
+                    {stageSponsors.length}
+                  </span>
+                </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    required
-                  >
-                    <option value="">Select event</option>
-                    {mockEvents.map(event => (
-                      <option key={event.id} value={event.id}>
-                        {event.name}
-                      </option>
-                    ))}
-                  </select>
+                  AED {stageTotal.toLocaleString()}
                 </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Contact Email
-                </label>
-                <input
-                  type="email"
-                  value={formData.contact_email}
-                  onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                />
               </div>
 
               <div className="p-4 space-y-3">
@@ -362,15 +343,34 @@ export function SponsorshipKanban() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Contact Email
+                      Event
                     </label>
-                    <input
-                      type="email"
-                      value={formData.contact_email}
-                      onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
+                    <select
+                      value={formData.event_id}
+                      onChange={(e) => setFormData({ ...formData, event_id: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                    />
+                      required
+                    >
+                      <option value="">Select event</option>
+                      {mockEvents.map(event => (
+                        <option key={event.id} value={event.id}>
+                          {event.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Contact Email
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.contact_email}
+                    onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
