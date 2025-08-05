@@ -39,13 +39,14 @@ export function Dashboard() {
 
   if (!user) return null;
 
-  const getDashboardData = () => {
-    const userTasks = getTasksByUserId(user.id);
-    const teamTasks = user.team_id ? getTasksByTeamId(user.team_id) : [];
-    const teamEvents = user.team_id ? getEventsByTeamId(user.team_id) : [];
-    const userSponsorships = getSponsorshipsByAssignedTo(user.id);
-    const userUploads = mockUploads.filter(u => u.uploaded_by === user.id);
+  // Move variable declarations to component level to make them accessible in JSX
+  const userTasks = getTasksByUserId(user.id);
+  const teamTasks = user.team_id ? getTasksByTeamId(user.team_id) : [];
+  const teamEvents = user.team_id ? getEventsByTeamId(user.team_id) : [];
+  const userSponsorships = getSponsorshipsByAssignedTo(user.id);
+  const userUploads = mockUploads.filter(u => u.uploaded_by === user.id);
 
+  const getDashboardData = () => {
     switch (user.role) {
       case 'ceo':
         return {
