@@ -44,11 +44,9 @@ export function Layout({ children }: LayoutProps) {
       case 'ceo':
         roleSpecificItems.push(
           { id: 'events', label: 'Events Calendar', icon: Calendar },
-          { id: 'teams', label: 'Manage Tasks & Teams', icon: Building2 },
+          { id: 'teams', label: 'Team Management', icon: Building2 },
           { id: 'budgets', label: 'Financial Overview', icon: DollarSign },
-          { id: 'event-requests', label: 'Request Events', icon: Bell },
           { id: 'contacts', label: 'Contact Directory', icon: Users },
-          { id: 'uploads', label: 'Manage Uploads', icon: Upload },
           { id: 'analytics', label: 'Analytics Dashboard', icon: BarChart3 },
           { id: 'ai-assistant', label: 'AI Assistant', icon: Brain },
           { id: 'audit-logs', label: 'Audit Logs', icon: Shield },
@@ -56,121 +54,70 @@ export function Layout({ children }: LayoutProps) {
         );
         break;
 
-      case 'administrator':
+      case 'admin':
         roleSpecificItems.push(
           { id: 'events', label: 'Events Calendar', icon: Calendar },
-          { id: 'teams', label: 'Manage Users & Teams', icon: Building2 },
-          { id: 'tasks', label: 'Create & Assign Tasks', icon: ClipboardList },
-          { id: 'budgets', label: 'Financial Overview', icon: DollarSign },
           { id: 'contacts', label: 'Contact Directory', icon: Users },
-          { id: 'uploads', label: 'Manage Uploads', icon: Upload },
+          { id: 'teams', label: 'Team Management', icon: Building2 },
+          { id: 'budgets', label: 'Budget Overview', icon: DollarSign },
           { id: 'analytics', label: 'Analytics Dashboard', icon: BarChart3 },
           { id: 'audit-logs', label: 'Audit Logs', icon: Shield },
-          { id: 'settings', label: 'System Settings', icon: Settings }
+          { id: 'teams', label: 'User Management', icon: UserCog }
         );
         break;
 
-      case 'accountant':
+      case 'marketing':
         roleSpecificItems.push(
-          { id: 'budgets', label: 'Budget Tasks', icon: DollarSign },
-          { id: 'analytics', label: 'Financial Analytics', icon: BarChart3 }
-        );
-        break;
-
-      case 'head_of_design':
-        roleSpecificItems.push(
-          { id: 'tasks', label: 'Assign Tasks', icon: ClipboardList },
-          { id: 'uploads', label: 'Manage Uploads', icon: Upload },
-          { id: 'teams', label: 'Design Team', icon: Building2 },
-          { id: 'analytics', label: 'Team Analytics', icon: BarChart3 }
-        );
-        break;
-
-      case 'designer':
-        roleSpecificItems.push(
-          { id: 'tasks', label: 'Update Tasks', icon: ClipboardList },
-          { id: 'uploads', label: 'Upload Files', icon: Upload }
-        );
-        break;
-
-      case 'it_manager':
-        roleSpecificItems.push(
-          { id: 'events', label: 'Events Calendar', icon: Calendar },
-          { id: 'event-requests', label: 'Approve Events (2/day)', icon: Bell },
-          { id: 'teams', label: 'Manage Users & Roles', icon: Building2 },
-          { id: 'tasks', label: 'Manage Tasks', icon: ClipboardList },
-          { id: 'uploads', label: 'Manage Uploads', icon: Upload },
-          { id: 'analytics', label: 'Analytics Dashboard', icon: BarChart3 },
-          { id: 'audit-logs', label: 'Audit Logs', icon: Shield },
-          { id: 'settings', label: 'System Settings', icon: Settings }
-        );
-        break;
-
-      case 'it_technical_staff':
-        roleSpecificItems.push(
-          { id: 'events', label: 'Events Calendar', icon: Calendar },
-          { id: 'event-requests', label: 'Approve Events (2/day)', icon: Bell },
-          { id: 'tasks', label: 'View Tasks', icon: ClipboardList },
-          { id: 'analytics', label: 'Analytics Dashboard', icon: BarChart3 },
-          { id: 'audit-logs', label: 'Audit Logs', icon: Shield }
-        );
-        break;
-
-      case 'team_lead':
-        roleSpecificItems.push(
-          { id: 'tasks', label: 'Create & Assign Tasks', icon: ClipboardList },
-          { id: 'events', label: 'Manage Team Events', icon: Calendar },
-          { id: 'uploads', label: 'Manage Uploads', icon: Upload },
-          { id: 'budgets', label: 'Team Budgets', icon: DollarSign },
-          { id: 'analytics', label: 'Team Analytics', icon: BarChart3 }
-        );
-        break;
-
-      case 'event_coordinator':
-        roleSpecificItems.push(
-          { id: 'tasks', label: 'Manage Tasks', icon: ClipboardList },
-          { id: 'event-requests', label: 'Request Event', icon: Bell },
-          { id: 'uploads', label: 'Manage Uploads', icon: Upload },
-          { id: 'events', label: 'Team Events', icon: Calendar },
-          { id: 'analytics', label: 'Team Analytics', icon: BarChart3 }
-        );
-        break;
-
-      case 'marketing_staff':
-        roleSpecificItems.push(
-          { id: 'tasks', label: 'Plan Campaigns', icon: ClipboardList },
           { id: 'contacts', label: 'Contacts (Limited)', icon: Users },
           { id: 'analytics', label: 'Marketing Analytics', icon: BarChart3 }
         );
         break;
 
-      case 'logistics_staff':
+      case 'ae':
         roleSpecificItems.push(
-          { id: 'tasks', label: 'Update Tasks', icon: ClipboardList },
-          { id: 'events', label: 'Team Events', icon: Calendar }
+          { id: 'events', label: 'My Events', icon: Calendar },
+          { id: 'tasks', label: 'My Tasks', icon: ClipboardList },
+          { id: 'event-requests', label: 'Request Event', icon: Bell },
+          { id: 'budgets', label: 'Event Budgets', icon: DollarSign }
         );
         break;
 
-      case 'sales_representative':
+      case 'designer':
         roleSpecificItems.push(
-          { id: 'tasks', label: 'Update Tasks', icon: ClipboardList },
-          { id: 'sponsorships', label: 'View Sponsorships', icon: Target },
-          { id: 'budgets', label: 'Request Budgets', icon: DollarSign }
+          { id: 'tasks', label: 'My Tasks', icon: ClipboardList },
+          { id: 'uploads', label: 'File Uploads', icon: Upload },
+          { id: 'teams', label: 'Team Overview', icon: Building2 }
         );
         break;
 
-      case 'production_staff':
+      case 'logistics':
         roleSpecificItems.push(
-          { id: 'tasks', label: 'Update Tasks', icon: ClipboardList },
-          { id: 'events', label: 'Team Events', icon: Calendar }
+          { id: 'tasks', label: 'My Tasks', icon: ClipboardList },
+          { id: 'teams', label: 'Team Overview', icon: Building2 }
         );
         break;
 
-      case 'accreditation_staff':
+      case 'it':
         roleSpecificItems.push(
-          { id: 'tasks', label: 'Update Tasks', icon: ClipboardList },
-          { id: 'events', label: 'Team Events', icon: Calendar }
+          { id: 'events', label: 'Events Calendar', icon: Calendar },
+          { id: 'event-requests', label: 'Event Requests', icon: Bell },
+          { id: 'budgets', label: 'Financial Overview', icon: DollarSign },
+          { id: 'analytics', label: 'Analytics Dashboard', icon: BarChart3 },
+          { id: 'audit-logs', label: 'Audit Logs', icon: Shield },
+          { id: 'settings', label: 'System Settings', icon: Settings }
         );
+        break;
+
+      case 'team_lead':
+        roleSpecificItems.push(
+          { id: 'team-tasks', label: 'Team Tasks', icon: ClipboardList },
+          { id: 'teams', label: 'Team Overview', icon: Building2 },
+          { id: 'analytics', label: 'Team Analytics', icon: BarChart3 }
+        );
+        break;
+
+      case 'finance':
+        // Finance role has no UI access as specified
         break;
     }
 
@@ -182,19 +129,14 @@ export function Layout({ children }: LayoutProps) {
   const getRoleColor = (role: string) => {
     const colors = {
       'ceo': 'bg-purple-100 text-purple-800 border-purple-200',
-      'administrator': 'bg-red-100 text-red-800 border-red-200',
-      'accountant': 'bg-green-100 text-green-800 border-green-200',
-      'head_of_design': 'bg-pink-100 text-pink-800 border-pink-200',
+      'admin': 'bg-red-100 text-red-800 border-red-200',
+      'marketing': 'bg-blue-100 text-blue-800 border-blue-200',
+      'ae': 'bg-green-100 text-green-800 border-green-200',
       'designer': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'it_manager': 'bg-indigo-100 text-indigo-800 border-indigo-200',
-      'it_technical_staff': 'bg-blue-100 text-blue-800 border-blue-200',
-      'team_lead': 'bg-orange-100 text-orange-800 border-orange-200',
-      'event_coordinator': 'bg-teal-100 text-teal-800 border-teal-200',
-      'marketing_staff': 'bg-cyan-100 text-cyan-800 border-cyan-200',
-      'logistics_staff': 'bg-amber-100 text-amber-800 border-amber-200',
-      'sales_representative': 'bg-emerald-100 text-emerald-800 border-emerald-200',
-      'production_staff': 'bg-slate-100 text-slate-800 border-slate-200',
-      'accreditation_staff': 'bg-violet-100 text-violet-800 border-violet-200'
+      'logistics': 'bg-orange-100 text-orange-800 border-orange-200',
+      'it': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      'team_lead': 'bg-pink-100 text-pink-800 border-pink-200',
+      'finance': 'bg-gray-100 text-gray-800 border-gray-200'
     };
     return colors[role as keyof typeof colors] || 'bg-gray-100 text-gray-800 border-gray-200';
   };
@@ -235,7 +177,7 @@ export function Layout({ children }: LayoutProps) {
                   {user.full_name}
                 </p>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getRoleColor(user.role)}`}>
-                  {user.role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  {user.role.replace('_', ' ').toUpperCase()}
                 </span>
               </div>
             </button>
@@ -267,7 +209,7 @@ export function Layout({ children }: LayoutProps) {
                           {demoUser.full_name}
                         </p>
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getRoleColor(demoUser.role)}`}>
-                          {demoUser.role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          {demoUser.role.replace('_', ' ').toUpperCase()}
                         </span>
                       </div>
                       {user.id === demoUser.id && (
@@ -315,6 +257,22 @@ export function Layout({ children }: LayoutProps) {
       </div>
     </div>
   );
+
+  if (user?.role === 'finance') {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            No UI Access
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400">
+            Finance role has data-only access as per organizational policy.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">

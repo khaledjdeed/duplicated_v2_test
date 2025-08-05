@@ -1,18 +1,43 @@
 import React, { useState, useCallback } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import { getTasksByUserId, mockUploads, getTasksByTeamId } from '../lib/mockData';
+import { useDemoAuth } from '../hooks/useDemoAuth';
+import { getTasksByUserId } from '../lib/mockData';
 import { getUserById } from '../lib/mockUsers';
-import { BackButton } from './BackButton';
 import { useDropzone } from 'react-dropzone';
 import { Upload, File, X, Check, Image, FileText, Archive } from 'lucide-react';
-import { Upload as UploadType, Task } from '../lib/types';
 import toast from 'react-hot-toast';
 
+interface UploadedFile {
+  id: string;
+  task_id: string;
+  file_name: string;
+  file_size: number;
+  file_type: string;
+  uploaded_at: string;
+  status: 'uploading' | 'completed' | 'failed';
+}
+
 export function FileUpload() {
-  const { user, canManageAllUploads, canManageOwnUploads } = useAuth();
-  const [uploads, setUploads] = useState<(UploadType & { status: 'uploading' | 'completed' | 'failed' })[]>(
-    mockUploads.map(upload => ({ ...upload, status: 'completed' as const }))
-  );
+  const { currentUser } = useDemoAuth();
+  const [uploads, setUploads] = useState<UploadedFile[]>([
+    {
+      id: 'upload1',
+      task_id: 'task1',
+      file_name: 'conference-banner-v2.png',
+      file_size: 2048000,
+      file_type: 'image/png',
+      uploaded_at: '2024-05-01T14:30:00Z',
+      status: 'completed'
+    },
+    {
+      id: 'upload2',
+      task_id: 'task3',
+      file_name: 'event-program-layout.pdf',
+      file_size: 1536000,
+      file_type: 'application/pdf',
+      uploaded_at: '2024-04-28T16:45:00Z',
+      status: 'completed'
+    }
+  ]);
 
   const [selectedTaskId, setSelectedTaskId] = useState('');
 
@@ -23,16 +48,14 @@ export function FileUpload() {
     }
 
     acceptedFiles.forEach((file) => {
-      const upload = {
+      const upload: UploadedFile = {
         id: `upload-${Date.now()}-${Math.random()}`,
-        task_id: selectedTaskId || undefined,
-        uploaded_by: user?.id || '',
+        task_id: selectedTaskId,
         file_name: file.name,
-        file_path: `/uploads/${file.name}`,
         file_size: file.size,
         file_type: file.type,
-        created_at: new Date().toISOString(),
-        status: 'uploading' as const
+        uploaded_at: new Date().toISOString(),
+        status: 'uploading'
       };
 
       setUploads(prev => [upload, ...prev]);
@@ -42,7 +65,7 @@ export function FileUpload() {
         setUploads(prev =>
           prev.map(u =>
             u.id === upload.id
-              ? { ...u, status: 'completed' as const }
+              ? { ...u, status: 'completed' }
               : u
           )
         );
@@ -84,66 +107,33 @@ export function FileUpload() {
     return File;
   };
 
-  const getFilteredTasks = (): Task[] => {
-    if (!user) return [];
-    
-    if (canManageAllUploads()) {
-      // Can upload to any task
-      return mockTasks;
-    } else if (canManageOwnUploads()) {
-      // Can only upload to own tasks
-      return getTasksByUserId(user.id);
-    }
-    
-    return [];
-  };
+  const canUploadFiles = currentUser?.role === 'designer';
 
-  const getFilteredUploads = () => {
-    if (!user) return [];
-    
-    if (canManageAllUploads()) {
-      return uploads;
-    } else if (canManageOwnUploads()) {
-      return uploads.filter(upload => upload.uploaded_by === user.id);
-    }
-    
-    return [];
-  };
-
-  const hasUploadAccess = canManageAllUploads() || canManageOwnUploads();
-  const availableTasks = getFilteredTasks();
-  const visibleUploads = getFilteredUploads();
-
-  if (!hasUploadAccess) {
+  if (!canUploadFiles) {
     return (
       <div className="p-6">
-        <BackButton />
         <div className="text-center py-12">
           <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            Access Restricted
-          </h2>
           <p className="text-gray-500 dark:text-gray-400">
-            You do not have permission to manage file uploads.
+            Access denied. Only Designers can upload files.
           </p>
         </div>
       </div>
     );
   }
 
+  const myTasks = getTasksByUserId(currentUser.id);
+  const myUploads = uploads.filter(upload => 
+    myTasks.some(task => task.id === upload.task_id)
+  );
+
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <BackButton />
-      </div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-            <Upload className="h-6 w-6 mr-2 text-blue-600" />
-            File Uploads
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">File Uploads</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            {canManageAllUploads() ? 'Manage all file uploads' : 'Upload files for your assigned tasks'}
+            Upload design files for your assigned tasks
           </p>
         </div>
       </div>
@@ -159,7 +149,7 @@ export function FileUpload() {
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
         >
           <option value="">Choose a task to upload files for...</option>
-          {availableTasks.map(task => (
+          {myTasks.map(task => (
             <option key={task.id} value={task.id}>
               {task.title} ({task.status})
             </option>
@@ -204,19 +194,19 @@ export function FileUpload() {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {canManageAllUploads() ? 'All Uploaded Files' : 'My Uploaded Files'}
+            My Uploaded Files
           </h2>
         </div>
         <div className="p-6">
-          {visibleUploads.length === 0 ? (
+          {myUploads.length === 0 ? (
             <div className="text-center py-8">
               <File className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500 dark:text-gray-400">No files uploaded yet</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {visibleUploads.map((upload) => {
-                const task = availableTasks.find(t => t.id === upload.task_id);
+              {myUploads.map((upload) => {
+                const task = myTasks.find(t => t.id === upload.task_id);
                 const FileIcon = getFileIcon(upload.file_type);
                 
                 return (
@@ -230,7 +220,7 @@ export function FileUpload() {
                         <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
                           <span>Task: {task?.title || 'Unknown'}</span>
                           <span>{formatFileSize(upload.file_size)}</span>
-                          <span>{new Date(upload.created_at).toLocaleDateString()}</span>
+                          <span>{new Date(upload.uploaded_at).toLocaleDateString()}</span>
                         </div>
                       </div>
                     </div>
@@ -241,14 +231,12 @@ export function FileUpload() {
                       {upload.status === 'completed' && (
                         <Check className="h-5 w-5 text-green-500" />
                       )}
-                      {(canManageAllUploads() || upload.uploaded_by === user?.id) && (
-                        <button
-                          onClick={() => handleRemoveUpload(upload.id)}
-                          className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handleRemoveUpload(upload.id)}
+                        className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 );

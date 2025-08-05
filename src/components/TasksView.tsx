@@ -1,54 +1,32 @@
 import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import { 
-  mockTasks, 
-  mockEvents, 
-  getTasksByUserId, 
-  getTasksByTeamId 
-} from '../lib/mockData';
-import { Task, Event } from '../lib/types';
+import { useDemoAuth } from '../hooks/useDemoAuth';
+import { mockTasks, mockEvents, MockTask } from '../lib/mockData';
 import { mockUsers } from '../lib/mockUsers';
 import { ClipboardList, Plus, Edit, Trash2, User, Calendar, AlertCircle, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
 export function TasksView() {
-  const { 
-    user, 
-    canCreateAssignTasksAll, 
-    canCreateAssignTasksTeam, 
-    canUpdateAssignedTasks,
-    canViewAllTasks,
-    canViewTeamTasks 
-  } = useAuth();
+  const { currentUser } = useDemoAuth();
   const [tasks, setTasks] = useState(mockTasks);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingTask, setEditingTask] = useState<MockTask | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     status: 'pending' as const,
     priority: 'medium' as const,
-    task_type: 'general' as const,
     due_date: '',
     assigned_to: '',
-    event_id: '',
-    team_id: user?.team_id || ''
+    event_id: ''
   });
 
   const getFilteredTasks = () => {
-    if (!user) return [];
+    if (!currentUser) return [];
     
-    // In production, this would be handled by Supabase RLS policies
-    // const { data: tasks } = await supabase.from('tasks').select('*');
-    
-    if (canViewAllTasks()) {
-      return tasks;
-    } else if (canCreateAssignTasksTeam() && user.team_id) {
-      return getTasksByTeamId(user.team_id);
-    } else if (canUpdateAssignedTasks()) {
-      return getTasksByUserId(user.id);
+    if (currentUser.role === 'designer') {
+      return tasks.filter(task => task.assigned_to === currentUser.id);
     }
     
     return tasks;
@@ -67,11 +45,9 @@ export function TasksView() {
       );
       toast.success('Task updated successfully');
     } else {
-      const newTask: Task = {
+      const newTask: MockTask = {
         id: `task-${Date.now()}`,
         ...formData,
-        team_id: user?.team_id || '',
-        created_by: user?.id || '',
         created_at: new Date().toISOString()
       };
       setTasks(prev => [...prev, newTask]);
@@ -88,7 +64,7 @@ export function TasksView() {
     }
   };
 
-  const handleStatusChange = (taskId: string, newStatus: Task['status']) => {
+  const handleStatusChange = (taskId: string, newStatus: MockTask['status']) => {
     setTasks(prev =>
       prev.map(task =>
         task.id === taskId
@@ -105,28 +81,24 @@ export function TasksView() {
       description: '',
       status: 'pending',
       priority: 'medium',
-      task_type: 'general',
       due_date: '',
       assigned_to: '',
-      event_id: '',
-      team_id: user?.team_id || ''
+      event_id: ''
     });
     setShowCreateModal(false);
     setEditingTask(null);
   };
 
-  const startEdit = (task: Task) => {
+  const startEdit = (task: MockTask) => {
     setEditingTask(task);
     setFormData({
       title: task.title,
       description: task.description,
       status: task.status,
       priority: task.priority,
-      task_type: task.task_type,
       due_date: task.due_date ? format(new Date(task.due_date), "yyyy-MM-dd'T'HH:mm") : '',
       assigned_to: task.assigned_to,
-      event_id: task.event_id || '',
-      team_id: task.team_id
+      event_id: task.event_id
     });
     setShowCreateModal(true);
   };
@@ -159,9 +131,8 @@ export function TasksView() {
     return event ? event.name : 'Unknown Event';
   };
 
-  const canCreateTasks = canCreateAssignTasksAll() || canCreateAssignTasksTeam();
-  const canEditTasks = canCreateAssignTasksAll() || canCreateAssignTasksTeam();
-  const canOnlyUpdateAssigned = canUpdateAssignedTasks() && !canCreateAssignTasksTeam() && !canCreateAssignTasksAll();
+  const canCreateTasks = ['it', 'admin', 'event_coordinator'].includes(currentUser?.role || '');
+  const canEditTasks = ['it', 'admin', 'event_coordinator'].includes(currentUser?.role || '');
   const filteredTasks = getFilteredTasks();
 
   return (
@@ -169,10 +140,10 @@ export function TasksView() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {canOnlyUpdateAssigned ? 'My Tasks' : 'Tasks'}
+            {currentUser?.role === 'designer' ? 'My Tasks' : 'Tasks'}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            {canOnlyUpdateAssigned 
+            {currentUser?.role === 'designer' 
               ? 'Tasks assigned to you' 
               : 'Manage team tasks and assignments'
             }
@@ -193,7 +164,7 @@ export function TasksView() {
         <div className="text-center py-12">
           <ClipboardList className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500 dark:text-gray-400">
-            {canOnlyUpdateAssigned ? 'No tasks assigned to you' : 'No tasks found'}
+            {currentUser?.role === 'designer' ? 'No tasks assigned to you' : 'No tasks found'}
           </p>
           {canCreateTasks && (
             <button
@@ -222,12 +193,9 @@ export function TasksView() {
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getPriorityColor(task.priority)}`}>
                         {task.priority} priority
                       </span>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 capitalize">
-                        {task.task_type}
-                      </span>
                     </div>
                   </div>
-                  {(canEditTasks || (canOnlyUpdateAssigned && task.assigned_to === user?.id)) && (
+                  {canEditTasks && (
                     <div className="flex space-x-2">
                       <button
                         onClick={() => startEdit(task)}
@@ -235,14 +203,12 @@ export function TasksView() {
                       >
                         <Edit className="h-4 w-4" />
                       </button>
-                      {canEditTasks && (
-                        <button
-                          onClick={() => handleDelete(task.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handleDelete(task.id)}
+                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   )}
                 </div>
@@ -258,12 +224,10 @@ export function TasksView() {
                     <User className="h-4 w-4 mr-2" />
                     Assigned to: {getUserName(task.assigned_to)}
                   </div>
-                  {task.event_id && (
-                    <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Event: {getEventName(task.event_id)}
-                    </div>
-                  )}
+                  <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Event: {getEventName(task.event_id)}
+                  </div>
                   {task.due_date && (
                     <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                       <AlertCircle className="h-4 w-4 mr-2" />
@@ -273,7 +237,7 @@ export function TasksView() {
                 </div>
 
                 {/* Quick Actions */}
-                {canOnlyUpdateAssigned && task.assigned_to === user?.id && (
+                {currentUser?.role === 'designer' && task.assigned_to === currentUser.id && (
                   <div className="flex space-x-2">
                     {task.status === 'pending' && (
                       <button
@@ -334,24 +298,6 @@ export function TasksView() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Task Type
-                  </label>
-                  <select
-                    value={formData.task_type}
-                    onChange={(e) => setFormData({ ...formData, task_type: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="general">General</option>
-                    <option value="design">Design</option>
-                    <option value="logistics">Logistics</option>
-                    <option value="marketing">Marketing</option>
-                    <option value="production">Production</option>
-                    <option value="accreditation">Accreditation</option>
-                  </select>
-                </div>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -395,11 +341,9 @@ export function TasksView() {
                     required
                   >
                     <option value="">Select assignee</option>
-                    {mockUsers
-                      .filter(u => canCreateAssignTasksAll() || u.team_id === user?.team_id)
-                      .map(teamUser => (
-                      <option key={teamUser.id} value={teamUser.id}>
-                        {teamUser.full_name} ({teamUser.role.replace(/_/g, ' ')})
+                    {mockUsers.map(user => (
+                      <option key={user.id} value={user.id}>
+                        {user.full_name} ({user.role.replace('_', ' ')})
                       </option>
                     ))}
                   </select>
@@ -413,6 +357,7 @@ export function TasksView() {
                     value={formData.event_id}
                     onChange={(e) => setFormData({ ...formData, event_id: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    required
                   >
                     <option value="">Select event</option>
                     {mockEvents.map(event => (

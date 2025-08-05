@@ -1,15 +1,50 @@
 import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import { mockEventRequests, getEventRequestsByUserId } from '../lib/mockData';
-import { BackButton } from './BackButton';
-import { EventRequest } from '../lib/types';
+import { useDemoAuth } from '../hooks/useDemoAuth';
 import { Calendar, Send, Clock, MapPin, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
+interface EventRequest {
+  id: string;
+  name: string;
+  description: string;
+  start_date: string;
+  end_date: string;
+  location: string;
+  justification: string;
+  status: 'pending' | 'approved' | 'rejected';
+  requested_by: string;
+  created_at: string;
+}
+
 export function EventRequestForm() {
-  const { user, canRequestEvents, canApproveEvents } = useAuth();
-  const [requests, setRequests] = useState<EventRequest[]>(mockEventRequests);
+  const { currentUser } = useDemoAuth();
+  const [requests, setRequests] = useState<EventRequest[]>([
+    {
+      id: 'req1',
+      name: 'Q3 Product Showcase',
+      description: 'Quarterly product demonstration for key stakeholders',
+      start_date: '2024-07-15T14:00:00Z',
+      end_date: '2024-07-15T18:00:00Z',
+      location: 'Executive Conference Room',
+      justification: 'Need to present Q3 achievements to board members and investors.',
+      status: 'pending',
+      requested_by: '2',
+      created_at: '2024-05-01T10:00:00Z'
+    },
+    {
+      id: 'req2',
+      name: 'Employee Training Workshop',
+      description: 'Professional development workshop for team members',
+      start_date: '2024-06-20T09:00:00Z',
+      end_date: '2024-06-20T17:00:00Z',
+      location: 'Training Center',
+      justification: 'Annual training requirement for skill development and compliance.',
+      status: 'approved',
+      requested_by: '2',
+      created_at: '2024-04-28T14:30:00Z'
+    }
+  ]);
 
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -21,31 +56,15 @@ export function EventRequestForm() {
     justification: ''
   });
 
-  const getFilteredRequests = () => {
-    if (!user) return [];
-    
-    if (canApproveEvents()) {
-      // IT can see all requests for approval
-      return requests;
-    } else if (canRequestEvents()) {
-      // Event coordinators can see their own requests
-      return getEventRequestsByUserId(user.id);
-    }
-    
-    return [];
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     const newRequest: EventRequest = {
       id: `req-${Date.now()}`,
       ...formData,
-      team_id: user?.team_id || '',
       status: 'pending',
-      requested_by: user?.id || '',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      requested_by: currentUser?.id || '',
+      created_at: new Date().toISOString()
     };
 
     setRequests(prev => [newRequest, ...prev]);
@@ -63,63 +82,43 @@ export function EventRequestForm() {
   };
 
   const getStatusColor = (status: string) => {
-    const colors = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      approved: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800'
-    };
-    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
+
+  const canRequestEvents = currentUser?.role === 'event_coordinator';
+  const canApproveRequests = currentUser?.role === 'it';
 
   const handleApproval = (requestId: string, status: 'approved' | 'rejected') => {
     setRequests(prev =>
       prev.map(req =>
         req.id === requestId
-          ? { ...req, status, reviewed_by: user?.id, updated_at: new Date().toISOString() }
+          ? { ...req, status }
           : req
       )
     );
     toast.success(`Request ${status} successfully`);
   };
 
-  const filteredRequests = getFilteredRequests();
-  const hasAccess = canRequestEvents() || canApproveEvents();
-
-  if (!hasAccess) {
-    return (
-      <div className="p-6">
-        <BackButton />
-        <div className="text-center py-12">
-          <Calendar className="h-12 w-12 text-red-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            Access Restricted
-          </h2>
-          <p className="text-gray-500 dark:text-gray-400">
-            You do not have permission to view event requests.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <BackButton />
-      </div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {canRequestEvents() && !canApproveEvents() ? 'My Event Requests' : 'Event Request Management'}
+            {canRequestEvents ? 'Event Requests' : 'Event Request Management'}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            {canRequestEvents() && !canApproveEvents()
+            {canRequestEvents 
               ? 'Submit requests for new events to IT for approval' 
               : 'Review and approve event requests from coordinators'
             }
           </p>
         </div>
-        {canRequestEvents() && (
+        {canRequestEvents && (
           <button
             onClick={() => setShowForm(true)}
             className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -130,15 +129,24 @@ export function EventRequestForm() {
         )}
       </div>
 
-      {hasAccess && (
+      {!canRequestEvents && !canApproveRequests && (
+        <div className="text-center py-12">
+          <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-gray-400">
+            Access denied. Only Event Coordinators can submit requests and IT can approve them.
+          </p>
+        </div>
+      )}
+
+      {(canRequestEvents || canApproveRequests) && (
         <div className="space-y-6">
-          {filteredRequests.length === 0 ? (
+          {requests.length === 0 ? (
             <div className="text-center py-12">
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500 dark:text-gray-400">No event requests found</p>
             </div>
           ) : (
-            filteredRequests.map((request) => (
+            requests.map((request) => (
               <div key={request.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
@@ -150,7 +158,7 @@ export function EventRequestForm() {
                         {request.status}
                       </span>
                     </div>
-                    {canApproveEvents() && request.status === 'pending' && (
+                    {canApproveRequests && request.status === 'pending' && (
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleApproval(request.id, 'approved')}
@@ -174,22 +182,18 @@ export function EventRequestForm() {
                     </p>
                   )}
 
-                  {(request.start_date || request.location) && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                      {request.start_date && request.end_date && (
-                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                          <Clock className="h-4 w-4 mr-2" />
-                          {format(new Date(request.start_date), 'MMM d, yyyy h:mm a')} - {format(new Date(request.end_date), 'MMM d, yyyy h:mm a')}
-                        </div>
-                      )}
-                      {request.location && (
-                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                          <MapPin className="h-4 w-4 mr-2" />
-                          {request.location}
-                        </div>
-                      )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                      <Clock className="h-4 w-4 mr-2" />
+                      {format(new Date(request.start_date), 'MMM d, yyyy h:mm a')} - {format(new Date(request.end_date), 'MMM d, yyyy h:mm a')}
                     </div>
-                  )}
+                    {request.location && (
+                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                        <MapPin className="h-4 w-4 mr-2" />
+                        {request.location}
+                      </div>
+                    )}
+                  </div>
 
                   {request.justification && (
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
