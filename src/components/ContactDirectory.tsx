@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigation } from '../hooks/useNavigation';
+import { mockContacts } from '../lib/mockData';
+import { BackButton } from './BackButton';
 import { 
   Users, 
   Search, 
@@ -15,59 +17,18 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-interface Contact {
-  id: string;
-  name: string;
-  position: string;
-  email: string;
-  phone: string;
-  organization: string;
-  attributes: Record<string, any>;
-  created_at: string;
-}
+import { Contact } from '../lib/types';
 
 export function ContactDirectory() {
-  const { user, canAccessContacts, canExport } = useAuth();
+  const { user, canAccessContactsFull, canAccessContactsLimited, canExportData } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [showEncrypted, setShowEncrypted] = useState(false);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
 
-  // Mock contacts data
-  const contacts: Contact[] = [
-    {
-      id: '1',
-      name: 'Dr. Ahmed Al-Rashid',
-      position: 'Chief Medical Officer',
-      email: 'ahmed.rashid@hospital.ae',
-      phone: '+971-50-123-4567',
-      organization: 'Dubai Health Authority',
-      attributes: { specialty: 'Cardiology', years_experience: 15 },
-      created_at: '2024-01-15T10:00:00Z'
-    },
-    {
-      id: '2',
-      name: 'Dr. Fatima Al-Zahra',
-      position: 'Head of Neurology',
-      email: 'fatima.zahra@clinic.ae',
-      phone: '+971-55-987-6543',
-      organization: 'American Hospital Dubai',
-      attributes: { specialty: 'Neurology', years_experience: 12 },
-      created_at: '2024-01-20T14:30:00Z'
-    },
-    {
-      id: '3',
-      name: 'Dr. Omar Hassan',
-      position: 'Director of Operations',
-      email: 'omar.hassan@medical.ae',
-      phone: '+971-52-456-7890',
-      organization: 'Mediclinic Middle East',
-      attributes: { specialty: 'Administration', years_experience: 20 },
-      created_at: '2024-02-01T09:15:00Z'
-    }
-  ];
+  const contacts = mockContacts;
 
   const handleExport = () => {
-    if (!canExport()) {
+    if (!canExportData()) {
       toast.error('You do not have permission to export contacts');
       return;
     }
@@ -98,12 +59,13 @@ export function ContactDirectory() {
     contact.position.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const hasFullAccess = canAccessContacts();
-  const isMarketing = user?.role === 'marketing';
+  const hasFullAccess = canAccessContactsFull();
+  const hasLimitedAccess = canAccessContactsLimited();
 
-  if (!hasFullAccess && !isMarketing) {
+  if (!hasFullAccess && !hasLimitedAccess) {
     return (
       <div className="p-6">
+        <BackButton />
         <div className="text-center py-12">
           <Shield className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -126,6 +88,9 @@ export function ContactDirectory() {
 
   return (
     <div className="p-6">
+      <div className="mb-6">
+        <BackButton />
+      </div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
@@ -133,7 +98,7 @@ export function ContactDirectory() {
             Contact Directory
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            {hasFullAccess ? 'Healthcare professionals database' : 'Limited view - name and position only'}
+            {hasFullAccess ? 'Healthcare professionals database' : 'Limited view - name, position, and organization only'}
           </p>
         </div>
         <div className="flex items-center space-x-2 mt-4 sm:mt-0">
@@ -150,7 +115,7 @@ export function ContactDirectory() {
               {showEncrypted ? 'Hide' : 'Show'} Contact Info
             </button>
           )}
-          {canExport() && (
+          {canExportData() && (
             <button
               onClick={handleExport}
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

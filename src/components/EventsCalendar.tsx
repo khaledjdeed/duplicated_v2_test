@@ -40,26 +40,15 @@ import {
 } from 'date-fns';
 import { BackButton } from './BackButton';
 import { LoadingSpinner } from './LoadingSpinner';
+import { mockEvents, getEventsByTeamId } from '../lib/mockData';
 import toast from 'react-hot-toast';
 
-interface Event {
-  id: string;
-  name: string;
-  description?: string;
-  start_date: string;
-  end_date: string;
-  location?: string;
-  status: 'planning' | 'active' | 'completed' | 'cancelled';
-  cme_credits?: number;
-  cme_accreditation?: string;
-  created_by: string;
-  created_at: string;
-}
+import { Event } from '../lib/types';
 
 type CalendarView = 'month' | 'week' | 'day';
 
 export function EventsCalendar() {
-  const { user, canCreateEvents } = useAuth();
+  const { user, canCreateEvents, canViewAllEvents, canViewTeamEvents } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<CalendarView>('month');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -67,48 +56,23 @@ export function EventsCalendar() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  // Mock events data - in real app this would come from Supabase
-  const events: Event[] = [
-    {
-      id: '1',
-      name: 'UAE Healthcare Innovation Summit 2024',
-      description: 'Premier healthcare conference focusing on digital health and AI in medicine.',
-      start_date: '2024-12-15T09:00:00Z',
-      end_date: '2024-12-17T18:00:00Z',
-      location: 'Dubai World Trade Centre',
-      status: 'planning',
-      cme_credits: 24,
-      cme_accreditation: 'DHA, MOH, HAAD',
-      created_by: 'user-1',
-      created_at: '2024-01-15T10:00:00Z'
-    },
-    {
-      id: '2',
-      name: 'Middle East Cardiology Congress',
-      description: 'Annual cardiology conference with leading specialists.',
-      start_date: '2024-12-20T08:30:00Z',
-      end_date: '2024-12-22T17:30:00Z',
-      location: 'Abu Dhabi Convention Centre',
-      status: 'active',
-      cme_credits: 32,
-      cme_accreditation: 'DHA, MOH, HAAD, AHA',
-      created_by: 'user-1',
-      created_at: '2024-02-01T14:30:00Z'
-    },
-    {
-      id: '3',
-      name: 'Pediatric Excellence Workshop',
-      description: 'Specialized workshop for pediatric healthcare professionals.',
-      start_date: '2024-11-25T09:00:00Z',
-      end_date: '2024-11-25T17:00:00Z',
-      location: 'Dubai Healthcare City',
-      status: 'completed',
-      cme_credits: 8,
-      cme_accreditation: 'DHA, MOH',
-      created_by: 'user-2',
-      created_at: '2024-10-01T09:00:00Z'
+  // Get events based on user permissions
+  const getFilteredEvents = (): Event[] => {
+    if (!user) return [];
+    
+    // In production, this would be handled by Supabase RLS policies
+    // const { data: events } = await supabase.from('events').select('*');
+    
+    if (canViewAllEvents()) {
+      return mockEvents;
+    } else if (canViewTeamEvents() && user.team_id) {
+      return getEventsByTeamId(user.team_id);
     }
-  ];
+    
+    return [];
+  };
+
+  const events = getFilteredEvents();
 
   const [formData, setFormData] = useState({
     name: '',

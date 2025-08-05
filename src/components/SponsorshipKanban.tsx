@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { useDemoAuth } from '../hooks/useDemoAuth';
-import { mockSponsorships, MockSponsorship } from '../lib/mockData';
+import { useAuth } from '../hooks/useAuth';
+import { mockSponsorships, getSponsorshipsByAssignedTo } from '../lib/mockData';
+import { BackButton } from './BackButton';
+import { Sponsorship } from '../lib/types';
 import { Plus, Edit, Trash2, DollarSign, Mail, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -37,10 +39,10 @@ const packageColors = {
 };
 
 export function SponsorshipKanban() {
-  const { currentUser } = useDemoAuth();
+  const { user } = useAuth();
   const [sponsorships, setSponsorships] = useState(mockSponsorships);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingSponsorship, setEditingSponsorship] = useState<MockSponsorship | null>(null);
+  const [editingSponsorship, setEditingSponsorship] = useState<Sponsorship | null>(null);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -51,9 +53,25 @@ export function SponsorshipKanban() {
     stage: 'prospecting' as const,
     amount: 0,
     notes: '',
-    event_id: 'event1'
+    event_id: '',
+    team_id: user?.team_id || '',
+    assigned_to: user?.id || ''
   });
 
+  const getFilteredSponsorships = () => {
+    if (!user) return [];
+    
+    // In production, this would be handled by Supabase RLS policies
+    // const { data: sponsorships } = await supabase.from('sponsorships').select('*');
+    
+    if (['ceo', 'administrator'].includes(user.role)) {
+      return sponsorships;
+    } else if (user.role === 'sales_representative') {
+      return getSponsorshipsByAssignedTo(user.id);
+    }
+    
+    return [];
+  };
   const handleDragStart = (e: React.DragEvent, sponsorshipId: string) => {
     setDraggedItem(sponsorshipId);
     e.dataTransfer.effectAllowed = 'move';
@@ -92,9 +110,11 @@ export function SponsorshipKanban() {
       );
       toast.success('Sponsorship updated successfully');
     } else {
-      const newSponsorship: MockSponsorship = {
+      const newSponsorship: Sponsorship = {
         id: `sponsor-${Date.now()}`,
         ...formData
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
       setSponsorships(prev => [...prev, newSponsorship]);
       toast.success('Sponsorship created successfully');
@@ -119,13 +139,15 @@ export function SponsorshipKanban() {
       stage: 'prospecting',
       amount: 0,
       notes: '',
-      event_id: 'event1'
+      event_id: '',
+      team_id: user?.team_id || '',
+      assigned_to: user?.id || ''
     });
     setShowCreateModal(false);
     setEditingSponsorship(null);
   };
 
-  const startEdit = (sponsorship: MockSponsorship) => {
+  const startEdit = (sponsorship: Sponsorship) => {
     setEditingSponsorship(sponsorship);
     setFormData({
       company_name: sponsorship.company_name,
@@ -135,20 +157,27 @@ export function SponsorshipKanban() {
       stage: sponsorship.stage,
       amount: sponsorship.amount || 0,
       notes: sponsorship.notes || '',
-      event_id: sponsorship.event_id
+      event_id: sponsorship.event_id,
+      team_id: sponsorship.team_id,
+      assigned_to: sponsorship.assigned_to
     });
     setShowCreateModal(true);
   };
 
-  const canManageSponsorships = ['sales', 'it', 'admin'].includes(currentUser?.role || '');
+  const filteredSponsorships = getFilteredSponsorships();
+  const canManageSponsorships = ['ceo', 'administrator', 'sales_representative'].includes(user?.role || '');
 
   if (!canManageSponsorships) {
     return (
       <div className="p-6">
+        <BackButton />
         <div className="text-center py-12">
           <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Access Restricted
+          </h2>
           <p className="text-gray-500 dark:text-gray-400">
-            Access denied. Only Sales, IT, and Admin users can view sponsorships.
+            You do not have permission to view sponsorships.
           </p>
         </div>
       </div>
@@ -157,24 +186,34 @@ export function SponsorshipKanban() {
 
   return (
     <div className="p-6">
+      <div className="mb-6">
+        <BackButton />
+      </div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sponsorship Pipeline</h1>
-          <p className="text-gray-600 dark:text-gray-400">Manage event sponsorships</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
+            <DollarSign className="h-6 w-6 mr-2 text-green-600" />
+            Sponsorship Pipeline
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            {user?.role === 'sales_representative' ? 'Manage your assigned sponsorships' : 'Manage event sponsorships'}
+          </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Sponsorship
-        </button>
+        {(['ceo', 'administrator', 'sales_representative'].includes(user?.role || '')) && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Sponsorship
+          </button>
+        )}
       </div>
 
       {/* Kanban Board */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {stages.map((stage) => {
-          const stageSponsors = sponsorships.filter(s => s.stage === stage);
+          const stageSponsors = filteredSponsorships.filter(s => s.stage === stage);
           const stageTotal = stageSponsors.reduce((sum, s) => sum + (s.amount || 0), 0);
           
           return (
@@ -187,15 +226,34 @@ export function SponsorshipKanban() {
               <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium text-gray-900 dark:text-white">
-                    {stageConfig[stage].title}
+                    Event
                   </h3>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${stageConfig[stage].color}`}>
-                    {stageSponsors.length}
-                  </span>
-                </div>
+                  <select
+                    value={formData.event_id}
+                    onChange={(e) => setFormData({ ...formData, event_id: e.target.value })}
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Total: AED {stageTotal.toLocaleString()}
+                    required
+                  >
+                    <option value="">Select event</option>
+                    {mockEvents.map(event => (
+                      <option key={event.id} value={event.id}>
+                        {event.name}
+                      </option>
+                    ))}
+                  </select>
                 </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Contact Email
+                </label>
+                <input
+                  type="email"
+                  value={formData.contact_email}
+                  onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                />
               </div>
 
               <div className="p-4 space-y-3">
@@ -210,20 +268,22 @@ export function SponsorshipKanban() {
                       <h4 className="font-medium text-gray-900 dark:text-white text-sm">
                         {sponsorship.company_name}
                       </h4>
-                      <div className="flex space-x-1">
-                        <button
-                          onClick={() => startEdit(sponsorship)}
-                          className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                        >
-                          <Edit className="h-3 w-3" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(sponsorship.id)}
-                          className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      </div>
+                      {(sponsorship.assigned_to === user?.id || ['ceo', 'administrator'].includes(user?.role || '')) && (
+                        <div className="flex space-x-1">
+                          <button
+                            onClick={() => startEdit(sponsorship)}
+                            className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(sponsorship.id)}
+                            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-2">

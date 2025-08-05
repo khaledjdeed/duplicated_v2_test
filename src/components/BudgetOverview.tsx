@@ -15,88 +15,78 @@ import {
   Building
 } from 'lucide-react';
 import { BackButton } from './BackButton';
+import { 
+  mockBudgets, 
+  mockEvents, 
+  mockSponsorships,
+  getBudgetsByEventId,
+  getSponsorshipsByAssignedTo,
+  getBudgetsForSponsorships,
+  getEventsByTeamId
+} from '../lib/mockData';
 import toast from 'react-hot-toast';
 
-interface BudgetItem {
-  id: string;
-  event_id: string;
-  event_name: string;
-  category: string;
-  allocated_amount: number;
-  spent_amount: number;
-  remaining_amount: number;
-  percentage_used: number;
-  status: 'on_track' | 'at_risk' | 'over_budget';
-  last_updated: string;
-}
+import { Budget } from '../lib/types';
 
 export function BudgetOverview() {
-  const { user, canViewBudgets } = useAuth();
+  const { 
+    user, 
+    canViewBudgetsFull, 
+    canViewBudgetsAssignedSponsors, 
+    canViewBudgetsTeamEvents 
+  } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState('current');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewType, setViewType] = useState<'summary' | 'detailed'>('summary');
 
-  const budgetData: BudgetItem[] = [
-    {
-      id: 'budget-1',
-      event_id: 'event-1',
-      event_name: 'UAE Healthcare Innovation Summit 2024',
-      category: 'Venue & Equipment',
-      allocated_amount: 150000,
-      spent_amount: 120000,
-      remaining_amount: 30000,
-      percentage_used: 80,
-      status: 'on_track',
-      last_updated: '2024-12-01T10:00:00Z'
-    },
-    {
-      id: 'budget-2',
-      event_id: 'event-1',
-      event_name: 'UAE Healthcare Innovation Summit 2024',
-      category: 'Catering & Hospitality',
-      allocated_amount: 85000,
-      spent_amount: 92000,
-      remaining_amount: -7000,
-      percentage_used: 108,
-      status: 'over_budget',
-      last_updated: '2024-11-28T15:30:00Z'
-    },
-    {
-      id: 'budget-3',
-      event_id: 'event-2',
-      event_name: 'Middle East Cardiology Congress',
-      category: 'Marketing & Promotion',
-      allocated_amount: 45000,
-      spent_amount: 38000,
-      remaining_amount: 7000,
-      percentage_used: 84,
-      status: 'on_track',
-      last_updated: '2024-11-30T09:15:00Z'
-    },
-    {
-      id: 'budget-4',
-      event_id: 'event-2',
-      event_name: 'Middle East Cardiology Congress',
-      category: 'Technology & AV',
-      allocated_amount: 60000,
-      spent_amount: 55000,
-      remaining_amount: 5000,
-      percentage_used: 92,
-      status: 'at_risk',
-      last_updated: '2024-11-29T14:20:00Z'
+  const getFilteredBudgets = (): Budget[] => {
+    if (!user) return [];
+    
+    // In production, this would be handled by Supabase RLS policies
+    // const { data: budgets } = await supabase.from('event_budgets').select('*');
+    
+    if (canViewBudgetsFull()) {
+      return mockBudgets;
+    } else if (canViewBudgetsAssignedSponsors()) {
+      const userSponsorships = getSponsorshipsByAssignedTo(user.id);
+      return getBudgetsForSponsorships(userSponsorships.map(s => s.id));
+    } else if (canViewBudgetsTeamEvents() && user.team_id) {
+      const teamEvents = getEventsByTeamId(user.team_id);
+      const teamEventIds = teamEvents.map(e => e.id);
+      return mockBudgets.filter(b => teamEventIds.includes(b.event_id));
     }
-  ];
-
-  const summaryStats = {
-    totalAllocated: budgetData.reduce((sum, item) => sum + item.allocated_amount, 0),
-    totalSpent: budgetData.reduce((sum, item) => sum + item.spent_amount, 0),
-    totalRemaining: budgetData.reduce((sum, item) => sum + item.remaining_amount, 0),
-    onTrackCount: budgetData.filter(item => item.status === 'on_track').length,
-    atRiskCount: budgetData.filter(item => item.status === 'at_risk').length,
-    overBudgetCount: budgetData.filter(item => item.status === 'over_budget').length
+    
+    return [];
   };
 
-  const categoryBreakdown = budgetData.reduce((acc, item) => {
+  const budgetData = getFilteredBudgets();
+  const enhancedBudgetData = budgetData.map(budget => {
+    const event = mockEvents.find(e => e.id === budget.event_id);
+    const remaining = budget.allocated_amount - budget.spent_amount;
+    const percentage = budget.allocated_amount > 0 ? (budget.spent_amount / budget.allocated_amount) * 100 : 0;
+    
+    let status: 'on_track' | 'at_risk' | 'over_budget' = 'on_track';
+    if (percentage > 100) status = 'over_budget';
+    else if (percentage > 85) status = 'at_risk';
+    
+    return {
+      ...budget,
+      event_name: event?.name || 'Unknown Event',
+      remaining_amount: remaining,
+      percentage_used: Math.round(percentage),
+      status
+    };
+  });
+  const summaryStats = {
+    totalAllocated: enhancedBudgetData.reduce((sum, item) => sum + item.allocated_amount, 0),
+    totalSpent: enhancedBudgetData.reduce((sum, item) => sum + item.spent_amount, 0),
+    totalRemaining: enhancedBudgetData.reduce((sum, item) => sum + item.remaining_amount, 0),
+    onTrackCount: enhancedBudgetData.filter(item => item.status === 'on_track').length,
+    atRiskCount: enhancedBudgetData.filter(item => item.status === 'at_risk').length,
+    overBudgetCount: enhancedBudgetData.filter(item => item.status === 'over_budget').length
+  };
+
+  const categoryBreakdown = enhancedBudgetData.reduce((acc, item) => {
     if (!acc[item.category]) {
       acc[item.category] = { allocated: 0, spent: 0 };
     }
@@ -127,7 +117,9 @@ export function BudgetOverview() {
     toast.success('Budget report exported successfully');
   };
 
-  if (!canViewBudgets()) {
+  const hasAnyBudgetAccess = canViewBudgetsFull() || canViewBudgetsAssignedSponsors() || canViewBudgetsTeamEvents();
+
+  if (!hasAnyBudgetAccess) {
     return (
       <div className="p-6">
         <div className="text-center py-12">
@@ -379,7 +371,7 @@ export function BudgetOverview() {
             </div>
             <div className="p-6">
               <div className="space-y-3">
-                {budgetData.filter(item => item.status !== 'on_track').map((item) => {
+                {enhancedBudgetData.filter(item => item.status !== 'on_track').map((item) => {
                   const StatusIcon = getStatusIcon(item.status);
                   return (
                     <div key={item.id} className={`p-4 rounded-lg border ${
@@ -407,7 +399,7 @@ export function BudgetOverview() {
                   );
                 })}
                 
-                {budgetData.filter(item => item.status !== 'on_track').length === 0 && (
+                {enhancedBudgetData.filter(item => item.status !== 'on_track').length === 0 && (
                   <div className="text-center py-8">
                     <CheckCircle className="h-12 w-12 text-green-400 mx-auto mb-4" />
                     <p className="text-green-600 font-medium">All budgets are on track!</p>
@@ -451,7 +443,7 @@ export function BudgetOverview() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {budgetData.map((item) => (
+                {enhancedBudgetData.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
@@ -502,6 +494,15 @@ export function BudgetOverview() {
               </tbody>
             </table>
           </div>
+
+          {enhancedBudgetData.length === 0 && (
+            <div className="text-center py-12">
+              <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400">
+                No budget data available for your role and assignments
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>
