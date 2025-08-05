@@ -148,3 +148,5 @@ The platform is fully responsive and optimized for:
 - Accessible UI components with proper contrast ratios
 
 This platform provides a comprehensive foundation for MCO's event management needs while maintaining strict security and access controls appropriate for healthcare industry requirements.
+
+link to the live web: https://moonlit-genie-259c9c.netlify.app/
