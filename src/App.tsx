@@ -30,33 +30,62 @@ function AppContent() {
         return <Dashboard />;
       case 'events':
       case 'calendar':
+      case 'event-planning':
+      case 'event-archives':
+      case 'venue-management':
         return <EventsCalendar />;
       case 'teams':
       case 'team-management':
+      case 'user-management':
         return <TeamManagement />;
       case 'budgets':
       case 'budget-overview':
+      case 'budget-management':
         return <BudgetOverview />;
       case 'analytics':
+      case 'performance-analytics':
+      case 'financial-reports':
+      case 'team-analytics':
+      case 'custom-reports':
         return <AnalyticsDashboard />;
       case 'audit-logs':
+      case 'security-audit':
         return <AuditLogs />;
       case 'system-settings':
       case 'settings':
+      case 'integrations':
         return <SystemSettings />;
       case 'ai-assistant':
+      case 'ai-insights':
         return <AIAssistant />;
       case 'contacts':
+      case 'contact-directory':
         return <ContactDirectory />;
+      case 'tasks':
+      case 'task-management':
+      case 'team-collaboration':
+      case 'uploads':
+      case 'file-management':
+      case 'resource-planning':
+      case 'quality-assurance':
+        return <Dashboard />; // Placeholder - these would have their own components
+      case 'sponsorships':
+      case 'sponsorship-pipeline':
+      case 'marketing-campaigns':
+        return <Dashboard />; // Placeholder - these would have their own components
+      case 'event-requests':
+      case 'support':
+      case 'support-center':
+        return <Dashboard />; // Placeholder - these would have their own components
       default:
         return <Dashboard />;
     }
   };
 
   return (
-      <EnhancedLayout>
-        {renderActiveTab()}
-      </EnhancedLayout>
+    <EnhancedLayout>
+      {renderActiveTab()}
+    </EnhancedLayout>
   );
 }
 

@@ -1,0 +1,452 @@
+/* Enhanced Toolbar Styles */
+
+/* CSS Custom Properties for Role-based Theming */
+:root {
+  /* Primary Colors */
+  --primary-50: #f0fdfa;
+  --primary-100: #ccfbf1;
+  --primary-500: #14b8a6;
+  --primary-600: #0d9488;
+  --primary-700: #0f766e;
+  
+  /* Role-based Colors */
+  --ceo-color: #8b5cf6;
+  --admin-color: #ef4444;
+  --marketing-color: #3b82f6;
+  --ae-color: #10b981;
+  --designer-color: #f59e0b;
+  --logistics-color: #f97316;
+  --it-color: #6366f1;
+  --team-lead-color: #ec4899;
+  --finance-color: #6b7280;
+  
+  /* Interaction States */
+  --hover-bg: rgba(20, 184, 166, 0.1);
+  --active-bg: rgba(20, 184, 166, 0.15);
+  --disabled-bg: #f3f4f6;
+  --disabled-text: #9ca3af;
+  
+  /* Spacing System (8px grid) */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode adjustments */
+.dark {
+  --hover-bg: rgba(20, 184, 166, 0.15);
+  --active-bg: rgba(20, 184, 166, 0.25);
+  --disabled-bg: #374151;
+  --disabled-text: #6b7280;
+}
+
+/* Enhanced Navigation Styles */
+.enhanced-toolbar {
+  font-family: var(--font-family);
+  width: 320px;
+  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  border-right: 1px solid #e5e7eb;
+  box-shadow: var(--shadow-md);
+}
+
+.dark .enhanced-toolbar {
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+  border-right-color: #374151;
+}
+
+/* Section Headers */
+.toolbar-section-header {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  padding: var(--spacing-sm) var(--spacing-md);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  margin: 2px 0;
+  position: relative;
+}
+
+.toolbar-section-header:hover {
+  background-color: var(--hover-bg);
+  transform: translateX(2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.toolbar-section-header.expanded {
+  background-color: var(--active-bg);
+  font-weight: 700;
+}
+
+.toolbar-section-header:focus {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* Sub-tab Items */
+.toolbar-subtab {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin: 1px 0;
+  border-radius: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.toolbar-subtab:hover {
+  background-color: var(--hover-bg);
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
+}
+
+.toolbar-subtab.active {
+  background-color: var(--active-bg);
+  border-left: 3px solid var(--primary-600);
+  font-weight: 600;
+  color: var(--primary-700);
+  box-shadow: var(--shadow-sm);
+}
+
+.toolbar-subtab:focus {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* Access Level Indicators */
+.toolbar-subtab-readonly {
+  opacity: 0.8;
+  position: relative;
+}
+
+.toolbar-subtab-readonly::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #6b7280;
+  border-radius: 0 2px 2px 0;
+}
+
+.toolbar-subtab-limited {
+  position: relative;
+}
+
+.toolbar-subtab-limited::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #d97706;
+  border-radius: 0 2px 2px 0;
+}
+
+/* Role-based Visual Indicators */
+.toolbar-role-indicator {
+  width: 3px;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 0 2px 2px 0;
+}
+
+.toolbar-role-indicator.ceo { background-color: var(--ceo-color); }
+.toolbar-role-indicator.admin { background-color: var(--admin-color); }
+.toolbar-role-indicator.marketing { background-color: var(--marketing-color); }
+.toolbar-role-indicator.ae { background-color: var(--ae-color); }
+.toolbar-role-indicator.designer { background-color: var(--designer-color); }
+.toolbar-role-indicator.logistics { background-color: var(--logistics-color); }
+.toolbar-role-indicator.it { background-color: var(--it-color); }
+.toolbar-role-indicator.team-lead { background-color: var(--team-lead-color); }
+.toolbar-role-indicator.finance { background-color: var(--finance-color); }
+
+/* Badge Styles */
+.toolbar-badge {
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse 2s infinite;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.8; 
+    transform: scale(1.05);
+  }
+}
+
+/* Access Level Badges */
+.access-badge {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  border: 1px solid transparent;
+}
+
+.access-badge.readonly {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-color: #d1d5db;
+}
+
+.dark .access-badge.readonly {
+  background: #374151;
+  color: #9ca3af;
+  border-color: #4b5563;
+}
+
+.access-badge.limited {
+  background: #fef3c7;
+  color: #d97706;
+  border-color: #fbbf24;
+}
+
+.dark .access-badge.limited {
+  background: #451a03;
+  color: #fbbf24;
+  border-color: #d97706;
+}
+
+.access-badge.full {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #10b981;
+}
+
+.dark .access-badge.full {
+  background: #022c22;
+  color: #34d399;
+  border-color: #059669;
+}
+
+/* Tooltip Styles */
+.toolbar-tooltip {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+  background: #1f2937;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 1000;
+  box-shadow: var(--shadow-lg);
+}
+
+.toolbar-tooltip::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 4px solid transparent;
+  border-right-color: #1f2937;
+}
+
+.toolbar-subtab:hover .toolbar-tooltip {
+  opacity: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .enhanced-toolbar {
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    position: fixed;
+    z-index: 50;
+    height: 100vh;
+  }
+  
+  .enhanced-toolbar.open {
+    transform: translateX(0);
+  }
+  
+  .toolbar-section-header,
+  .toolbar-subtab {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .enhanced-toolbar {
+    width: 260px;
+  }
+  
+  .toolbar-section-header,
+  .toolbar-subtab {
+    font-size: var(--font-size-xs);
+  }
+}
+
+@media (min-width: 1025px) {
+  .enhanced-toolbar {
+    width: 320px;
+  }
+}
+
+/* Animation for Section Expansion */
+.section-expand-enter {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+}
+
+.section-expand-enter-active {
+  opacity: 1;
+  max-height: 500px;
+  transition: opacity 200ms ease-in-out, max-height 200ms ease-in-out;
+}
+
+.section-expand-exit {
+  opacity: 1;
+  max-height: 500px;
+}
+
+.section-expand-exit-active {
+  opacity: 0;
+  max-height: 0;
+  transition: opacity 200ms ease-in-out, max-height 200ms ease-in-out;
+  overflow: hidden;
+}
+
+/* Loading States */
+.toolbar-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.toolbar-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #d1d5db;
+  border-top-color: var(--primary-500);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Accessibility Enhancements */
+.toolbar-item:focus {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+.toolbar-item[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .toolbar-subtab.active {
+    border-left-width: 4px;
+    font-weight: 700;
+    background-color: #000;
+    color: #fff;
+  }
+  
+  .access-badge {
+    border: 2px solid currentColor;
+    font-weight: 600;
+  }
+  
+  .toolbar-badge {
+    border: 2px solid #fff;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .toolbar-section-header,
+  .toolbar-subtab {
+    transition: none;
+  }
+  
+  .toolbar-section-header:hover,
+  .toolbar-subtab:hover {
+    transform: none;
+  }
+  
+  .toolbar-badge {
+    animation: none;
+  }
+  
+  .enhanced-toolbar {
+    transition: none;
+  }
+}
+
+/* Focus Management */
+.toolbar-section-header:focus-visible,
+.toolbar-subtab:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+  background-color: var(--hover-bg);
+}
+
+/* Performance Optimizations */
+.enhanced-toolbar {
+  contain: layout style;
+  will-change: transform;
+}
+
+.toolbar-subtab,
+.toolbar-section-header {
+  contain: layout;
+}
+
+/* Print Styles */
+@media print {
+  .enhanced-toolbar {
+    display: none;
+  }
+}
