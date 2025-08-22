@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   users: User[];
   switchUser: (userId: string) => void;
+  signOut: () => void;
   hasPermission: (permission: string) => boolean;
   canAccessContacts: () => boolean;
   canExport: () => boolean;
@@ -70,11 +71,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return ['ceo', 'admin', 'marketing'].includes(user?.role || '');
   };
 
+  const signOut = () => {
+    setUser(null);
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
       users: mockUsers,
       switchUser,
+      signOut,
       hasPermission,
       canAccessContacts,
       canExport,

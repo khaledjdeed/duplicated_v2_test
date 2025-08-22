@@ -26,7 +26,7 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { user, users, switchUser } = useAuth();
+  const { user, users, switchUser, signOut } = useAuth();
   const { currentPage, navigateTo } = useNavigation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showUserSwitcher, setShowUserSwitcher] = useState(false);
@@ -217,6 +217,18 @@ export function Layout({ children }: LayoutProps) {
                       )}
                     </button>
                   ))}
+                  <div className="border-t border-gray-100 dark:border-gray-700 mt-2 pt-2">
+                    <button
+                      onClick={() => {
+                        signOut();
+                        setShowUserSwitcher(false);
+                      }}
+                      className="w-full flex items-center space-x-3 p-3 rounded-md text-left hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-600 dark:text-red-400"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span className="text-sm font-medium">Sign Out</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
