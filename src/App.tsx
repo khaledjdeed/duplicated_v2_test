@@ -71,28 +71,6 @@ export default function App() {
   );
 }
 
-// Remove the inline AuditLogsView component - now using AuditLogs from components
-
-/*
-// Old inline component removed - replaced with proper AuditLogs component
-interface AuditLog {
-  id: string;
-  user_id: string;
-  user_name: string;
-  action: string;
-  table_name: string;
-  record_id?: string;
-  details?: Record<string, any>;
-  timestamp: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  ip_address?: string;
-}
-
-export function AuditLogsView() {
-  // This component has been moved to src/components/AuditLogs.tsx
-  // with enhanced functionality and proper role-based access control
-}
-*/
 import toast from 'react-hot-toast';
 
 interface AuditLog {
