@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigation } from '../hooks/useNavigation';
+import { useErrorHandler } from '../hooks/useErrorHandler';
+import { useApiWithErrorHandling } from '../hooks/useApiWithErrorHandling';
+import { FormErrorHandler, useFormValidation } from '../components/FormErrorHandler';
+import { LoadingState } from '../components/LoadingStates';
 import { 
   Calendar, 
   ChevronLeft, 
@@ -60,15 +64,39 @@ type CalendarView = 'month' | 'week' | 'day';
 
 export function EventsCalendar() {
   const { user, canCreateEvents } = useAuth();
+  const { handleError, handleValidationError } = useErrorHandler();
+  const { data: events, loading, supabaseInsert, supabaseUpdate, supabaseDelete } = useApiWithErrorHandling([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<CalendarView>('month');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   
-  // Mock events data - in real app this would come from Supabase
-  const events: Event[] = [
+  // Form validation
+  const { values: formData, errors, setValue, validateAll, clearError, reset } = useFormValidation({
+    name: '',
+    description: '',
+    start_date: '',
+    end_date: '',
+    location: '',
+    status: 'planning' as const,
+    cme_credits: 0,
+    cme_accreditation: ''
+  }, {
+    name: (value) => !value?.trim() ? 'Event name is required' : null,
+    start_date: (value) => !value ? 'Start date is required' : null,
+    end_date: (value, values) => {
+      if (!value) return 'End date is required';
+      if (values.start_date && new Date(value) <= new Date(values.start_date)) {
+        return 'End date must be after start date';
+      }
+      return null;
+    }
+  });
+
+  // Mock events data - in production this would come from Supabase
+  const mockEvents: Event[] = [
     {
       id: '1',
       name: 'UAE Healthcare Innovation Summit 2024',
@@ -110,16 +138,7 @@ export function EventsCalendar() {
     }
   ];
 
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    start_date: '',
-    end_date: '',
-    location: '',
-    status: 'planning' as const,
-    cme_credits: 0,
-    cme_accreditation: ''
-  });
+  const displayEvents = events || mockEvents;
 
   const getCalendarDays = () => {
     const start = startOfWeek(startOfMonth(currentDate));
@@ -134,7 +153,7 @@ export function EventsCalendar() {
   };
 
   const getEventsForDate = (date: Date) => {
-    return events.filter(event => {
+    return displayEvents.filter(event => {
       const eventStart = parseISO(event.start_date);
       const eventEnd = parseISO(event.end_date);
       return date >= startOfDay(eventStart) && date <= endOfDay(eventEnd);
@@ -173,81 +192,105 @@ export function EventsCalendar() {
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateAll()) {
+      return;
+    }
+    
     if (!canCreateEvents()) {
-      toast.error('You do not have permission to create events');
+      handleError({
+        code: 'PERMISSION_DENIED',
+        message: 'You do not have permission to create events',
+        timestamp: new Date(),
+        severity: 'medium',
+        recoverable: false,
+        context: 'event-creation'
+      });
       return;
     }
 
-    setLoading(true);
+    setSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await supabaseInsert('events', {
+        name: formData.name,
+        description: formData.description,
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        location: formData.location,
+        status: formData.status,
+        cme_credits: formData.cme_credits,
+        cme_accreditation: formData.cme_accreditation,
+        created_by: user?.id
+      });
+      
       toast.success('Event created successfully');
       setShowCreateModal(false);
-      resetForm();
+      reset();
     } catch (error) {
-      toast.error('Failed to create event');
+      handleError(error as Error, 'event-creation');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
   const handleEditEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    
+    if (!validateAll()) {
+      return;
+    }
+    
+    if (!selectedEvent) return;
+    
+    setSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await supabaseUpdate('events', selectedEvent.id, {
+        name: formData.name,
+        description: formData.description,
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        location: formData.location,
+        status: formData.status,
+        cme_credits: formData.cme_credits,
+        cme_accreditation: formData.cme_accreditation
+      });
+      
       toast.success('Event updated successfully');
       setShowEditModal(false);
       setSelectedEvent(null);
-      resetForm();
+      reset();
     } catch (error) {
-      toast.error('Failed to update event');
+      handleError(error as Error, 'event-update');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
   const handleDeleteEvent = async (eventId: string) => {
     if (!confirm('Are you sure you want to delete this event?')) return;
     
-    setLoading(true);
+    setSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await supabaseDelete('events', eventId);
       toast.success('Event deleted successfully');
       setSelectedEvent(null);
     } catch (error) {
-      toast.error('Failed to delete event');
+      handleError(error as Error, 'event-deletion');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      start_date: '',
-      end_date: '',
-      location: '',
-      status: 'planning',
-      cme_credits: 0,
-      cme_accreditation: ''
-    });
   };
 
   const startEdit = (event: Event) => {
     setSelectedEvent(event);
-    setFormData({
-      name: event.name,
-      description: event.description || '',
-      start_date: format(parseISO(event.start_date), "yyyy-MM-dd'T'HH:mm"),
-      end_date: format(parseISO(event.end_date), "yyyy-MM-dd'T'HH:mm"),
-      location: event.location || '',
-      status: event.status,
-      cme_credits: event.cme_credits || 0,
-      cme_accreditation: event.cme_accreditation || ''
-    });
+    setValue('name', event.name);
+    setValue('description', event.description || '');
+    setValue('start_date', format(parseISO(event.start_date), "yyyy-MM-dd'T'HH:mm"));
+    setValue('end_date', format(parseISO(event.end_date), "yyyy-MM-dd'T'HH:mm"));
+    setValue('location', event.location || '');
+    setValue('status', event.status);
+    setValue('cme_credits', event.cme_credits || 0);
+    setValue('cme_accreditation', event.cme_accreditation || '');
     setShowEditModal(true);
   };
 
@@ -481,6 +524,8 @@ export function EventsCalendar() {
 
   return (
     <div className="p-6 space-y-6">
+      {loading && <LoadingState type="skeleton" />}
+      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center space-x-4">
@@ -637,6 +682,9 @@ export function EventsCalendar() {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Create New Event
               </h2>
+              
+              <FormErrorHandler errors={errors} onClearError={clearError} className="mb-4" />
+              
               <form onSubmit={handleCreateEvent} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -646,7 +694,7 @@ export function EventsCalendar() {
                     type="text"
                     required
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => setValue('name', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                     placeholder="Enter event name"
                   />
@@ -659,7 +707,7 @@ export function EventsCalendar() {
                   <textarea
                     rows={3}
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(e) => setValue('description', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                     placeholder="Event description"
                   />
@@ -674,7 +722,7 @@ export function EventsCalendar() {
                       type="datetime-local"
                       required
                       value={formData.start_date}
-                      onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                      onChange={(e) => setValue('start_date', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                     />
                   </div>
@@ -686,7 +734,7 @@ export function EventsCalendar() {
                       type="datetime-local"
                       required
                       value={formData.end_date}
-                      onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                      onChange={(e) => setValue('end_date', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                     />
                   </div>
@@ -699,7 +747,7 @@ export function EventsCalendar() {
                   <input
                     type="text"
                     value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    onChange={(e) => setValue('location', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                     placeholder="Event location"
                   />
@@ -714,7 +762,7 @@ export function EventsCalendar() {
                       type="number"
                       min="0"
                       value={formData.cme_credits}
-                      onChange={(e) => setFormData({ ...formData, cme_credits: Number(e.target.value) })}
+                      onChange={(e) => setValue('cme_credits', Number(e.target.value))}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                     />
                   </div>
@@ -725,7 +773,7 @@ export function EventsCalendar() {
                     <input
                       type="text"
                       value={formData.cme_accreditation}
-                      onChange={(e) => setFormData({ ...formData, cme_accreditation: e.target.value })}
+                      onChange={(e) => setValue('cme_accreditation', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                       placeholder="e.g., DHA, MOH, HAAD"
                     />
@@ -735,10 +783,10 @@ export function EventsCalendar() {
                 <div className="flex space-x-3 pt-4">
                   <button
                     type="submit"
-                    disabled={loading}
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+                    disabled={submitting}
+                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   >
-                    {loading ? <LoadingSpinner size="sm" /> : 'Create Event'}
+                    {submitting ? <LoadingState type="spinner" size="sm" /> : 'Create Event'}
                   </button>
                   <button
                     type="button"
@@ -762,6 +810,9 @@ export function EventsCalendar() {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Edit Event
               </h2>
+              
+              <FormErrorHandler errors={errors} onClearError={clearError} className="mb-4" />
+              
               <form onSubmit={handleEditEvent} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -771,7 +822,7 @@ export function EventsCalendar() {
                     type="text"
                     required
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => setValue('name', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
@@ -783,7 +834,7 @@ export function EventsCalendar() {
                   <textarea
                     rows={3}
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(e) => setValue('description', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
@@ -797,7 +848,7 @@ export function EventsCalendar() {
                       type="datetime-local"
                       required
                       value={formData.start_date}
-                      onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                      onChange={(e) => setValue('start_date', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                     />
                   </div>
@@ -809,8 +860,48 @@ export function EventsCalendar() {
                       type="datetime-local"
                       required
                       value={formData.end_date}
-                      onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                      onChange={(e) => setValue('end_date', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => setValue('location', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="Event location"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      CME Credits
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.cme_credits}
+                      onChange={(e) => setValue('cme_credits', Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Accreditation
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.cme_accreditation}
+                      onChange={(e) => setValue('cme_accreditation', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                      placeholder="e.g., DHA, MOH, HAAD"
                     />
                   </div>
                 </div>
@@ -821,7 +912,7 @@ export function EventsCalendar() {
                   </label>
                   <select
                     value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                    onChange={(e) => setValue('status', e.target.value as any)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
                   >
                     <option value="planning">Planning</option>
@@ -834,10 +925,10 @@ export function EventsCalendar() {
                 <div className="flex space-x-3 pt-4">
                   <button
                     type="submit"
-                    disabled={loading}
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+                    disabled={submitting}
+                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   >
-                    {loading ? <LoadingSpinner size="sm" /> : 'Update Event'}
+                    {submitting ? <LoadingState type="spinner" size="sm" /> : 'Update Event'}
                   </button>
                   <button
                     type="button"
