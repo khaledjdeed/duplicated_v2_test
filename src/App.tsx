@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { AuthProvider } from './hooks/useAuth';
 import { NavigationProvider } from './hooks/useNavigation';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { NetworkStatus } from './components/NetworkStatus';
+import { ToastManager } from './components/ErrorToast';
 import { useNavigation } from './hooks/useNavigation';
 import { EnhancedLayout } from './components/EnhancedLayout';
 import { Dashboard } from './components/Dashboard';
@@ -91,11 +94,15 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NavigationProvider>
-        <AppContent />
-      </NavigationProvider>
-      <Toaster position="top-right" />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <NavigationProvider>
+          <AppContent />
+          <NetworkStatus />
+          <ToastManager />
+        </NavigationProvider>
+        <Toaster position="top-right" />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
