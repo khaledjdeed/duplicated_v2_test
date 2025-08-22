@@ -60,7 +60,7 @@ function AppContent() {
   );
 }
 
-function App() {
+export default function App() {
   return (
     <AuthProvider>
       <NavigationProvider>
@@ -70,5 +70,3 @@ function App() {
     </AuthProvider>
   );
 }
-
-export default App;
