@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { AuthProvider } from './hooks/useAuth';
 import { NavigationProvider } from './hooks/useNavigation';
 import { useNavigation } from './hooks/useNavigation';
-import { Layout } from './components/Layout';
+import { EnhancedLayout } from './components/EnhancedLayout';
 import { Dashboard } from './components/Dashboard';
 import { EventsCalendar } from './components/EventsCalendar';
 import { TeamManagement } from './components/TeamManagement';
@@ -54,9 +54,9 @@ function AppContent() {
   };
 
   return (
-      <Layout>
+      <EnhancedLayout>
         {renderActiveTab()}
-      </Layout>
+      </EnhancedLayout>
   );
 }
 
