@@ -1,12 +1,20 @@
 import React, { useState, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigation } from '../hooks/useNavigation';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EnhancedToolbar } from './EnhancedToolbar';
 
 interface EnhancedLayoutProps {
+  children: React.ReactNode;
+}
 
+export function EnhancedLayout({ children }: EnhancedLayoutProps) {
+  const { user } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showUserSwitcher, setShowUserSwitcher] = useState(false);
+
+  // Finance role has no UI access
   if (user?.role === 'finance') {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
