@@ -60,7 +60,7 @@ function AppContent() {
   );
 }
 
-export default function App() {
+function App() {
   return (
     <AuthProvider>
       <NavigationProvider>
@@ -69,4 +69,3 @@ export default function App() {
       <Toaster position="top-right" />
     </AuthProvider>
   );
-}
